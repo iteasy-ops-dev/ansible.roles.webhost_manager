@@ -1,0 +1,13 @@
+<IfModule cband_module>
+<CBandUser cband{{ user_id }}>
+     CBandUserLimit {{ cband_limit }}Gi
+     CBandUserPeriod 1D
+     <Location /throttle-me>
+       SetHandler cband-status-me
+       AuthName "cband-status-me"
+       AuthType Basic
+       AuthUserFile /usr/local/apache/conf/.{{ user_id }}
+       require user {{ user_id }}
+     </Location>
+   </CBandUser>
+</IfModule>

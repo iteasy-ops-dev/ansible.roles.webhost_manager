@@ -5,7 +5,6 @@
     shell: /bin/bash
     home: "/home/{{ user_id }}"
     create_home: yes
-    append: true
     group: www
 
 - name: Set disk quota

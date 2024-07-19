@@ -1,0 +1,8 @@
+---
+# vars file for iteasy.ansible.roles.webhost_manager
+user_id: "iteasy"
+user_pass: "iteasy"
+cband_limit: "3"
+disk_quota: "unlimited"
+vhost_domain: "example.com"
+listen_port: "80"
