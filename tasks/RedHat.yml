@@ -1,3 +1,8 @@
+- name: Ensure group "www" exists
+  ansible.builtin.group:
+    name: www
+    state: present
+
 - name: Ensure user exists
   user:
     name: "{{ user_id }}"
@@ -5,7 +10,6 @@
     shell: /bin/bash
     home: "/home/{{ user_id }}"
     create_home: yes
-    append: true
     group: www
 
 - name: Set disk quota
