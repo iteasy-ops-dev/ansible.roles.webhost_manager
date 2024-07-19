@@ -12,10 +12,6 @@
     create_home: yes
     group: www
 
-# - name: Set disk quota
-#   command: >
-#     setquota -u {{ user_id }} {{ disk_quota == 'unlimited' | ternary('0 0 0 0', (disk_quota | int * 1024 * 1024 / 4) ~ ' ' ~ (disk_quota | int * 1024 * 1024 / 4) ~ ' 0 0') }} -a
-#   when: disk_quota is defined
 - name: Prepare disk quota command
   set_fact:
     quota_command: >
@@ -30,6 +26,13 @@
   command: "{{ quota_command }}"
   when: disk_quota is defined
 
+- name: Debug directory paths and modes
+  debug:
+    msg: "Directory: {{ item }}, Mode: {{ item == '/home/' ~ user_id ~ '/www' | ternary('0755', '0701') }}"
+  with_items:
+    - "/home/{{ user_id }}"
+    - "/home/{{ user_id }}/www"
+    - "/etc/httpd/logs/vhosts/{{ user_id }}"
 
 - name: Create necessary directories
   file:
@@ -42,6 +45,7 @@
     - "/home/{{ user_id }}"
     - "/home/{{ user_id }}/www"
     - "/etc/httpd/logs/vhosts/{{ user_id }}"
+
 
 - name: Backup and configure vhosts.conf
   block:
