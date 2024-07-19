@@ -1,0 +1,8 @@
+---
+# defaults file for iteasy.ansible.roles.webhost_manager
+user_id: ""
+user_pass: ""
+cband_limit: ""
+disk_quota: ""
+vhost_domain: ""
+listen_port: ""

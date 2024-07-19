@@ -1,0 +1,97 @@
+- name: Ensure user exists
+  user:
+    name: "{{ user_id }}"
+    password: "{{ user_pass | password_hash('sha512') }}"
+    shell: /bin/bash
+    home: "/home/{{ user_id }}"
+    create_home: yes
+    group: www
+
+- name: Set disk quota
+  command: >
+    setquota -u {{ user_id }}
+    {{ disk_quota == 'unlimited' | ternary('0 0 0 0', (disk_quota | int * 1024 * 1024 / 4) ~ ' ' ~ (disk_quota | int * 1024 * 1024 / 4) ~ ' 0 0') }}
+    -a
+  when: disk_quota is defined
+
+- name: Create necessary directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ user_id }}"
+    group: www
+    mode: "{{ item == '/home/' ~ user_id ~ '/www' | ternary('0755', '0701') }}"
+  with_items:
+    - "/home/{{ user_id }}"
+    - "/home/{{ user_id }}/www"
+    - "/etc/httpd/logs/vhosts/{{ user_id }}"
+
+- name: Backup and configure vhosts.conf
+  block:
+    - name: Backup vhosts.conf
+      copy:
+        src: /etc/httpd/conf.d/vhosts.conf
+        dest: /etc/httpd/conf.d/vhosts.conf.old
+        remote_src: yes
+
+    - name: Configure vhosts.conf
+      template:
+        src: vhost.j2
+        dest: /tmp/vhosts.conf_tempfile
+
+    - name: Merge vhosts configuration
+      lineinfile:
+        path: /etc/httpd/conf.d/vhosts.conf
+        insertafter: EOF
+        line: "{{ lookup('file', '/tmp/vhosts.conf_tempfile') }}"
+
+  rescue:
+    - name: Restore backup of vhosts.conf
+      copy:
+        src: /etc/httpd/conf.d/vhosts.conf.old
+        dest: /etc/httpd/conf.d/vhosts.conf
+        remote_src: yes
+
+    - name: Rename vhosts temporary file to indicate failure
+      command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
+
+- name: Backup and configure cband.conf
+  block:
+    - name: Backup cband.conf
+      copy:
+        src: /etc/httpd/conf.d/cband.conf
+        dest: /etc/httpd/conf.d/cband.conf.old
+        remote_src: yes
+
+    - name: Configure cband.conf
+      template:
+        src: cband.j2
+        dest: /tmp/cband.conf_tempfile
+
+    - name: Merge cband configuration
+      lineinfile:
+        path: /etc/httpd/conf.d/cband.conf
+        insertafter: EOF
+        line: "{{ lookup('file', '/tmp/cband.conf_tempfile') }}"
+
+  rescue:
+    - name: Restore backup of cband.conf
+      copy:
+        src: /etc/httpd/conf.d/cband.conf.old
+        dest: /etc/httpd/conf.d/cband.conf
+        remote_src: yes
+
+    - name: Rename cband temporary file to indicate failure
+      command: mv /tmp/cband.conf_tempfile /tmp/cband.conf_tempfile_failed
+
+- name: Test Apache configuration
+  command: /usr/sbin/apachectl -t
+  notify:
+    - Restart Apache
+  failed_when: false
+  register: apache_test
+
+- name: Check Apache configuration test result
+  fail:
+    msg: "Apache configuration test failed, changes have been rolled back."
+  when: apache_test.rc != 0

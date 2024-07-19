@@ -1,0 +1,8 @@
+---
+# handlers file for iteasy.ansible.roles.webhost_manager
+---
+- name: Restart Apache
+  systemd:
+    name: httpd
+    state: restarted
+    enabled: yes

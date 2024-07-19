@@ -1,0 +1,5 @@
+---
+- hosts: vms
+  remote_user: root
+  roles:
+    - iteasy.ansible.roles.webhost_manager
