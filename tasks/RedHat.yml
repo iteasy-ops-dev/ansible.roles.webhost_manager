@@ -95,6 +95,7 @@
         path: /etc/httpd/conf.d/vhosts.conf
         insertafter: EOF
         line: "{{ lookup('file', '/tmp/vhosts.conf_tempfile') }}"
+      when: tempfile_status.stat.exists
 
   rescue:
     - name: Restore backup of vhosts.conf
