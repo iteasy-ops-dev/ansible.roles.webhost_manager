@@ -104,8 +104,8 @@
         dest: /etc/httpd/conf.d/vhosts.conf
         remote_src: yes
 
-    - name: Rename vhosts temporary file to indicate failure
-      command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
+    # - name: Rename vhosts temporary file to indicate failure
+    #   command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
 
 
 - name: Backup and configure cband.conf
