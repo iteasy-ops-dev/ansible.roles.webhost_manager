@@ -67,6 +67,46 @@
 #     - name: Rename vhosts temporary file to indicate failure
 #       command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
 
+# - name: Backup and configure vhosts.conf
+#   block:
+#     - name: Backup vhosts.conf
+#       copy:
+#         src: /etc/httpd/conf.d/vhosts.conf
+#         dest: /etc/httpd/conf.d/vhosts.conf.old
+#         remote_src: yes
+
+#     - name: Configure vhosts.conf
+#       template:
+#         src: vhost.j2
+#         dest: /tmp/vhosts.conf_tempfile
+
+#     - name: Debug vhosts.conf_tempfile existence
+#       stat:
+#         path: /tmp/vhosts.conf_tempfile
+#       register: tempfile_status
+
+#     - name: Ensure vhosts.conf_tempfile exists
+#       fail:
+#         msg: "Temporary file /tmp/vhosts.conf_tempfile was not created by template."
+#       when: not tempfile_status.stat.exists
+
+#     - name: Merge vhosts configuration
+#       lineinfile:
+#         path: /etc/httpd/conf.d/vhosts.conf
+#         insertafter: EOF
+#         line: "{{ lookup('file', '/tmp/vhosts.conf_tempfile') }}"
+#       when: tempfile_status.stat.exists
+
+#   rescue:
+#     - name: Restore backup of vhosts.conf
+#       copy:
+#         src: /etc/httpd/conf.d/vhosts.conf.old
+#         dest: /etc/httpd/conf.d/vhosts.conf
+#         remote_src: yes
+
+#     - name: Rename vhosts temporary file to indicate failure
+#       command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
+
 - name: Backup and configure vhosts.conf
   block:
     - name: Backup vhosts.conf
@@ -90,11 +130,17 @@
         msg: "Temporary file /tmp/vhosts.conf_tempfile was not created by template."
       when: not tempfile_status.stat.exists
 
+    - name: Slurp vhosts.conf_tempfile content
+      ansible.builtin.slurp:
+        src: /tmp/vhosts.conf_tempfile
+      register: slurped_file
+      when: tempfile_status.stat.exists
+
     - name: Merge vhosts configuration
       lineinfile:
         path: /etc/httpd/conf.d/vhosts.conf
         insertafter: EOF
-        line: "{{ lookup('file', '/tmp/vhosts.conf_tempfile') }}"
+        line: "{{ slurped_file.content | b64decode }}"
       when: tempfile_status.stat.exists
 
   rescue:
@@ -104,8 +150,9 @@
         dest: /etc/httpd/conf.d/vhosts.conf
         remote_src: yes
 
-    # - name: Rename vhosts temporary file to indicate failure
-    #   command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
+    - name: Rename vhosts temporary file to indicate failure
+      command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
+
 
 
 - name: Backup and configure cband.conf
