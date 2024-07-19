@@ -38,6 +38,17 @@
     - { path: "/home/{{ user_id }}/www", mode: "0755" }
     - { path: "/etc/httpd/logs/vhosts/{{ user_id }}", mode: "0701" }
 
+- name: Check if conf/nobots.conf exists
+  stat:
+    path: /etc/httpd/conf/nobots.conf
+  register: nobots_conf
+
+- name: Create nobots.conf from template if it does not exist
+  template:
+    src: templates/nobots.j2
+    dest: /etc/httpd/conf/nobots.conf
+  when: not nobots_conf.stat.exists
+
 - name: Backup and configure vhosts.conf
   block:
     - name: Backup vhosts.conf
@@ -83,35 +94,6 @@
 
     - name: Rename vhosts temporary file to indicate failure
       command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
-
-# - name: Backup and configure cband.conf
-#   block:
-#     - name: Backup cband.conf
-#       copy:
-#         src: /etc/httpd/conf.d/cband.conf
-#         dest: /etc/httpd/conf.d/cband.conf.old
-#         remote_src: yes
-
-#     - name: Configure cband.conf
-#       template:
-#         src: cband.j2
-#         dest: /tmp/cband.conf_tempfile
-
-#     - name: Merge cband configuration
-#       lineinfile:
-#         path: /etc/httpd/conf.d/cband.conf
-#         insertafter: EOF
-#         line: "{{ lookup('file', '/tmp/cband.conf_tempfile') }}"
-
-#   rescue:
-#     - name: Restore backup of cband.conf
-#       copy:
-#         src: /etc/httpd/conf.d/cband.conf.old
-#         dest: /etc/httpd/conf.d/cband.conf
-#         remote_src: yes
-
-#     - name: Rename cband temporary file to indicate failure
-#       command: mv /tmp/cband.conf_tempfile /tmp/cband.conf_tempfile_failed
 
 - name: Backup and configure cband.conf
   block:

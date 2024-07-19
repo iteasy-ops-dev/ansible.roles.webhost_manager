@@ -1,5 +1,5 @@
 <VirtualHost *:{{ listen_port }}>
-    ServerAdmin webmaster@
+    ServerAdmin webmaster@{{ vhost_domain }}
     DocumentRoot /home/{{ user_id }}/www
     ServerName {{ vhost_domain }}
     ServerAlias {{ vhost_domain }}

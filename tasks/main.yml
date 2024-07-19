@@ -1,6 +1,11 @@
 ---
 # tasks file for iteasy.ansible.roles.webhost_manager
+# TODO: 생성만 있으므로 수정 및 삭제에 대한 부분도 필요함
+# TODO: Debian 계열 필요함
+# TODO: DB 기능 필요함
 - name: Include OS-specific variables.
   ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
 
 - ansible.builtin.include_tasks: "{{ ansible_os_family }}.yml"
+
+

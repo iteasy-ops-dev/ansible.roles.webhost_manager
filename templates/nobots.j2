@@ -1,0 +1,20 @@
+# TODO: 여기에 어떤 구성이 있는지 확인이 필요
+# TODO: 아래 구문은 기본 설정
+# Apache configuration to block unwanted bots
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Block known bad bots
+    RewriteCond %{HTTP_USER_AGENT} ^.*(AhrefsBot|SemrushBot|MJ12bot).*$ [NC]
+    RewriteRule ^ - [F,L]
+</IfModule>
+
+<IfModule mod_setenvif.c>
+    SetEnvIfNoCase User-Agent "AhrefsBot" bad_bot
+    SetEnvIfNoCase User-Agent "SemrushBot" bad_bot
+    SetEnvIfNoCase User-Agent "MJ12bot" bad_bot
+    <Limit GET POST HEAD>
+        Order Allow,Deny
+        Allow from all
+        Deny from env=bad_bot
+    </Limit>
+</IfModule>
