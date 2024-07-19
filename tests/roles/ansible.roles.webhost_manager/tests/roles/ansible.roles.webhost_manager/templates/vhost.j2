@@ -1,0 +1,30 @@
+<VirtualHost *:{{ listen_port }}>
+    ServerAdmin webmaster@
+    DocumentRoot /home/{{ user_id }}/www
+    ServerName {{ vhost_domain }}
+    ServerAlias {{ vhost_domain }}
+    <Directory /home/{{ user_id }}/www>
+        Options -ExecCGI
+        AllowOverride All
+        Order Deny,Allow
+        Allow from all
+        Require all granted
+        RMode config
+        RUidGid {{ user_id }} www
+    </Directory>
+    ErrorLog logs/vhosts/{{ user_id }}/{{ user_id }}-error_log
+    CustomLog logs/vhosts/{{ user_id }}/{{ user_id }}-access_log combined
+    php_admin_flag display_errors Off
+    php_admin_flag allow_url_fopen Off
+    php_admin_flag register_globals Off
+    php_admin_flag magic_quotes_gpc Off
+    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK)
+    RewriteRule .* - [F]
+    RewriteCond %{REQUEST_URI} ^/error/509.html$
+    RewriteRule ^ http://web2002.co.kr/traffic/index.htm [R=302,L,E=nocache:1]
+    Include conf/nobots.conf
+    <IfModule security2_module>
+        Include conf/modsec_rules/modsecurity-middle.conf
+        SecRuleEngine On
+    </IfModule>
+</VirtualHost>
