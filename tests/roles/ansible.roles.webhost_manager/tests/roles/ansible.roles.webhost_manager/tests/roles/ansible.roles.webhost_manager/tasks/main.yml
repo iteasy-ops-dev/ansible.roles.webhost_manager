@@ -1,6 +1,0 @@
----
-# tasks file for iteasy.ansible.roles.webhost_manager
-- name: Include OS-specific variables.
-  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
-
-- ansible.builtin.include_tasks: "{{ ansible_os_family }}.yml"
