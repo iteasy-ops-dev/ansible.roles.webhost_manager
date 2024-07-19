@@ -14,9 +14,7 @@
 
 - name: Set disk quota
   command: >
-    setquota -u {{ user_id }}
-    {{ disk_quota == 'unlimited' | ternary('0 0 0 0', (disk_quota | int * 1024 * 1024 / 4) ~ ' ' ~ (disk_quota | int * 1024 * 1024 / 4) ~ ' 0 0') }}
-    -a
+    setquota -u {{ user_id }} {{ disk_quota == 'unlimited' | ternary('0 0 0 0', (disk_quota | int * 1024 * 1024 / 4) ~ ' ' ~ (disk_quota | int * 1024 * 1024 / 4) ~ ' 0 0') }} -a
   when: disk_quota is defined
 
 - name: Create necessary directories
