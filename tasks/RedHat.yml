@@ -26,26 +26,37 @@
   command: "{{ quota_command }}"
   when: disk_quota is defined
 
-- name: Debug directory paths and modes
-  debug:
-    msg: "Directory: {{ item }}, Mode: {{ item == '/home/' ~ user_id ~ '/www' | ternary('0755', '0701') }}"
-  with_items:
-    - "/home/{{ user_id }}"
-    - "/home/{{ user_id }}/www"
-    - "/etc/httpd/logs/vhosts/{{ user_id }}"
+# - name: Debug directory paths and modes
+#   debug:
+#     msg: "Directory: {{ item }}, Mode: {{ item == '/home/' ~ user_id ~ '/www' | ternary('0755', '0701') }}"
+#   with_items:
+#     - "/home/{{ user_id }}"
+#     - "/home/{{ user_id }}/www"
+#     - "/etc/httpd/logs/vhosts/{{ user_id }}"
 
-- name: Create necessary directories
+# - name: Create necessary directories
+#   file:
+#     path: "{{ item }}"
+#     state: directory
+#     owner: "{{ user_id }}"
+#     group: www
+#     mode: "{{ item == '/home/' ~ user_id ~ '/www' | ternary('0755', '0701') }}"
+#   with_items:
+#     - "/home/{{ user_id }}"
+#     - "/home/{{ user_id }}/www"
+#     - "/etc/httpd/logs/vhosts/{{ user_id }}"
+
+- name: Create necessary directories with specific modes
   file:
-    path: "{{ item }}"
+    path: "{{ item.path }}"
     state: directory
     owner: "{{ user_id }}"
     group: www
-    mode: "{{ item == '/home/' ~ user_id ~ '/www' | ternary('0755', '0701') }}"
+    mode: "{{ item.mode }}"
   with_items:
-    - "/home/{{ user_id }}"
-    - "/home/{{ user_id }}/www"
-    - "/etc/httpd/logs/vhosts/{{ user_id }}"
-
+    - { path: "/home/{{ user_id }}", mode: "0701" }
+    - { path: "/home/{{ user_id }}/www", mode: "0755" }
+    - { path: "/etc/httpd/logs/vhosts/{{ user_id }}", mode: "0701" }
 
 - name: Backup and configure vhosts.conf
   block:
