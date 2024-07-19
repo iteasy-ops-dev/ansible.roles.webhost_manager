@@ -38,75 +38,6 @@
     - { path: "/home/{{ user_id }}/www", mode: "0755" }
     - { path: "/etc/httpd/logs/vhosts/{{ user_id }}", mode: "0701" }
 
-# - name: Backup and configure vhosts.conf
-#   block:
-#     - name: Backup vhosts.conf
-#       copy:
-#         src: /etc/httpd/conf.d/vhosts.conf
-#         dest: /etc/httpd/conf.d/vhosts.conf.old
-#         remote_src: yes
-
-#     - name: Configure vhosts.conf
-#       template:
-#         src: vhost.j2
-#         dest: /tmp/vhosts.conf_tempfile
-
-#     - name: Merge vhosts configuration
-#       lineinfile:
-#         path: /etc/httpd/conf.d/vhosts.conf
-#         insertafter: EOF
-#         line: "{{ lookup('file', '/tmp/vhosts.conf_tempfile') }}"
-
-#   rescue:
-#     - name: Restore backup of vhosts.conf
-#       copy:
-#         src: /etc/httpd/conf.d/vhosts.conf.old
-#         dest: /etc/httpd/conf.d/vhosts.conf
-#         remote_src: yes
-
-#     - name: Rename vhosts temporary file to indicate failure
-#       command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
-
-# - name: Backup and configure vhosts.conf
-#   block:
-#     - name: Backup vhosts.conf
-#       copy:
-#         src: /etc/httpd/conf.d/vhosts.conf
-#         dest: /etc/httpd/conf.d/vhosts.conf.old
-#         remote_src: yes
-
-#     - name: Configure vhosts.conf
-#       template:
-#         src: vhost.j2
-#         dest: /tmp/vhosts.conf_tempfile
-
-#     - name: Debug vhosts.conf_tempfile existence
-#       stat:
-#         path: /tmp/vhosts.conf_tempfile
-#       register: tempfile_status
-
-#     - name: Ensure vhosts.conf_tempfile exists
-#       fail:
-#         msg: "Temporary file /tmp/vhosts.conf_tempfile was not created by template."
-#       when: not tempfile_status.stat.exists
-
-#     - name: Merge vhosts configuration
-#       lineinfile:
-#         path: /etc/httpd/conf.d/vhosts.conf
-#         insertafter: EOF
-#         line: "{{ lookup('file', '/tmp/vhosts.conf_tempfile') }}"
-#       when: tempfile_status.stat.exists
-
-#   rescue:
-#     - name: Restore backup of vhosts.conf
-#       copy:
-#         src: /etc/httpd/conf.d/vhosts.conf.old
-#         dest: /etc/httpd/conf.d/vhosts.conf
-#         remote_src: yes
-
-#     - name: Rename vhosts temporary file to indicate failure
-#       command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
-
 - name: Backup and configure vhosts.conf
   block:
     - name: Backup vhosts.conf
@@ -153,7 +84,34 @@
     - name: Rename vhosts temporary file to indicate failure
       command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
 
+# - name: Backup and configure cband.conf
+#   block:
+#     - name: Backup cband.conf
+#       copy:
+#         src: /etc/httpd/conf.d/cband.conf
+#         dest: /etc/httpd/conf.d/cband.conf.old
+#         remote_src: yes
 
+#     - name: Configure cband.conf
+#       template:
+#         src: cband.j2
+#         dest: /tmp/cband.conf_tempfile
+
+#     - name: Merge cband configuration
+#       lineinfile:
+#         path: /etc/httpd/conf.d/cband.conf
+#         insertafter: EOF
+#         line: "{{ lookup('file', '/tmp/cband.conf_tempfile') }}"
+
+#   rescue:
+#     - name: Restore backup of cband.conf
+#       copy:
+#         src: /etc/httpd/conf.d/cband.conf.old
+#         dest: /etc/httpd/conf.d/cband.conf
+#         remote_src: yes
+
+#     - name: Rename cband temporary file to indicate failure
+#       command: mv /tmp/cband.conf_tempfile /tmp/cband.conf_tempfile_failed
 
 - name: Backup and configure cband.conf
   block:
@@ -168,11 +126,28 @@
         src: cband.j2
         dest: /tmp/cband.conf_tempfile
 
+    - name: Debug cband.conf_tempfile existence
+      stat:
+        path: /tmp/cband.conf_tempfile
+      register: tempfile_status
+
+    - name: Ensure cband.conf_tempfile exists
+      fail:
+        msg: "Temporary file /tmp/cband.conf_tempfile was not created by template."
+      when: not tempfile_status.stat.exists
+
+    - name: Slurp cband.conf_tempfile content
+      ansible.builtin.slurp:
+        src: /tmp/cband.conf_tempfile
+      register: slurped_file
+      when: tempfile_status.stat.exists
+
     - name: Merge cband configuration
       lineinfile:
         path: /etc/httpd/conf.d/cband.conf
         insertafter: EOF
-        line: "{{ lookup('file', '/tmp/cband.conf_tempfile') }}"
+        line: "{{ slurped_file.content | b64decode }}"
+      when: tempfile_status.stat.exists
 
   rescue:
     - name: Restore backup of cband.conf
@@ -183,6 +158,7 @@
 
     - name: Rename cband temporary file to indicate failure
       command: mv /tmp/cband.conf_tempfile /tmp/cband.conf_tempfile_failed
+
 
 - name: Test Apache configuration
   command: /usr/sbin/apachectl -t
