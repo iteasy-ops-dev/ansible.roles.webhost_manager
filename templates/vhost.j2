@@ -1,5 +1,5 @@
 <VirtualHost *:{{ listen_port }}>
-    ServerAdmin {{ user_id }}@{{ vhost_domain }}
+    # ServerAdmin {{ user_id }}@{{ vhost_domain }}
     DocumentRoot /home/{{ user_id }}/www
     ServerName {{ vhost_domain }}
     ServerAlias {{ vhost_domain }}
@@ -22,7 +22,7 @@
     RewriteRule .* - [F]
     RewriteCond %{REQUEST_URI} ^/error/509.html$
     RewriteRule ^ http://web2002.co.kr/traffic/index.htm [R=302,L,E=nocache:1]
-    Include conf/nobots.conf
+    # Include conf/nobots.conf
     <IfModule security2_module>
         Include conf/modsec_rules/modsecurity-middle.conf
         SecRuleEngine On

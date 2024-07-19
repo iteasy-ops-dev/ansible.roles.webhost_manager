@@ -38,6 +38,11 @@
     - { path: "/home/{{ user_id }}/www", mode: "0755" }
     - { path: "/etc/httpd/logs/vhosts/{{ user_id }}", mode: "0701" }
 
+- name: Create index.html from template
+  template:
+    src: templates/index.html.j2
+    dest: /home/{{ user_id }}/www/index.html
+
 - name: Check if conf/nobots.conf exists
   stat:
     path: /etc/httpd/conf/nobots.conf
