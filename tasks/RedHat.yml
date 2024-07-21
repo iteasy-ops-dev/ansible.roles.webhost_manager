@@ -1,3 +1,5 @@
+#TODO: quota 확인함. 추가하면될 듯
+
 - name: Ensure group "www" exists
   ansible.builtin.group:
     name: www
