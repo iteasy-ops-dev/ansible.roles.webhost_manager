@@ -48,10 +48,10 @@
   set_fact:
     vhost_content_str: "{{ vhost_content.content | b64decode }}"
 
-- name: Find the VirtualHost block containing the ServerName
+- name: Find the start and end index of the VirtualHost block containing the ServerName
   set_fact:
     start_index: "{{ vhost_content_str.find('<VirtualHost', vhost_content_str.find('ServerName ' ~ vhost_domain)) }}"
-    end_index: "{{ vhost_content_str.find('</VirtualHost>', vhost_content_str.find('ServerName ' ~ vhost_domain)) + len('</VirtualHost>') }}"
+    end_index: "{{ vhost_content_str.find('</VirtualHost>', start_index) + 14 }}"  # 14는 '</VirtualHost>'의 길이입니다.
 
 - name: Ensure the ServerName and VirtualHost block are found
   fail:
@@ -83,7 +83,7 @@
     insertafter: EOF
   when: target_block is defined
 
-- name: Remove original VirtualHost block
+- name: Remove the original VirtualHost block
   replace:
     path: /etc/httpd/conf.d/vhosts.conf
     regexp: "{{ target_block | regex_escape }}"
