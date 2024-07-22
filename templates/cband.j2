@@ -1,13 +1,51 @@
+# <IfModule cband_module>
+#   <Location /cband-status>
+#         SetHandler cband-status
+#   </Location>
+#   <CBandUser cband {{ user_id }}>
+#      CBandUserLimit {{ cband_limit }}Gi
+#      CBandUserPeriod 1D
+#      <Location /throttle-me>
+#        SetHandler cband-status-me
+#        AuthName "cband-status-me"
+#        AuthType Basic
+#        AuthUserFile /usr/local/apache/conf/.{{ user_id }}
+#        require user {{ user_id }}
+#      </Location>
+#    </CBandUser>
+# </IfModule>
+
+
 <IfModule cband_module>
-  <CBandUser cband{{ user_id }}>
-     CBandUserLimit {{ cband_limit }}Gi
-     CBandUserPeriod 1D
-     <Location /throttle-me>
-       SetHandler cband-status-me
-       AuthName "cband-status-me"
-       AuthType Basic
-       AuthUserFile /usr/local/apache/conf/.{{ user_id }}
-       require user {{ user_id }}
-     </Location>
-   </CBandUser>
+    # 사용자 대역폭 제한 설정
+    <CBandUser cband{{ user_id }}>
+        CBandUserLimit {{ cband_limit }}Gi
+        CBandUserPeriod 1D
+    </CBandUser>
+
+    # 대역폭 상태 페이지 설정
+    <Location /cband-status>
+        SetHandler cband-status
+        # Order deny,allow
+        # Deny from all
+        # Allow from 127.0.0.1 116.122.36.109 118.130.111.140 211.43.203.111 58.230.162.232 118.130.111.142 58.230.237 58.229.176.26
+    </Location>
+
+    # 대역폭 상태 페이지에 대한 핸들러 설정
+    <Location /cband-status-me>
+        SetHandler cband-status-me
+        AuthName "cband-status-me"
+        AuthType Basic
+        AuthUserFile /usr/local/apache/conf/.{{ user_id }}
+        Require user {{ user_id }}
+    </Location>
+
+    # 사용자에 대한 대역폭 제한 모니터링 페이지
+    <Location /~*/cband-status-me>
+        SetHandler cband-status-me
+        AuthName "cband-status-me"
+        AuthType Basic
+        AuthUserFile /usr/local/apache/conf/.{{ user_id }}
+        Require user {{ user_id }}
+    </Location>
 </IfModule>

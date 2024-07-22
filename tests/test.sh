@@ -15,10 +15,6 @@ ansible-playbook -i inventory test.yml -vvvvv
 # echo > /etc/httpd/conf/nobots.conf
 # echo > /etc/httpd/conf.d/cband.conf
 # /usr/sbin/apachectl -t
-
-# userdel iteasy
-# rm -rf /home/iteasy/
-# rm -rf /etc/httpd/logs/vhosts/iteasy/
 # userdel iteasy1
 # rm -rf /home/iteasy1/
 # rm -rf /etc/httpd/logs/vhosts/iteasy1/
