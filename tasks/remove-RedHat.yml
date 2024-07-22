@@ -41,7 +41,7 @@
 # vhost 삭제
 - name: Read vhost configuration file
   slurp:
-    src: "{{ vhost_file }}"
+    src: /etc/httpd/conf.d/vhosts.conf
   register: vhost_content
 
 - name: Convert slurped content to string
@@ -76,7 +76,7 @@
 
 - name: Replace the original block with commented block
   blockinfile:
-    path: "{{ vhost_file }}"
+    path: /etc/httpd/conf.d/vhosts.conf
     block: "{{ lookup('file', '/tmp/commented_block.conf') }}"
     state: present
     marker: ""
@@ -85,7 +85,7 @@
 
 - name: Remove original VirtualHost block
   replace:
-    path: "{{ vhost_file }}"
+    path: /etc/httpd/conf.d/vhosts.conf
     regexp: "{{ target_block | regex_escape }}"
     replace: ""
   when: target_block is defined
