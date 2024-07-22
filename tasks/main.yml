@@ -7,4 +7,9 @@
   ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
 
 - name: Include OS-specific tasks
-  ansible.builtin.include_tasks: "{{ ansible_os_family }}.yml"
+  ansible.builtin.include_tasks: "setup-{{ ansible_os_family }}.yml"
+  when: setup | default(true) | bool
+
+- name: Include OS-specific tasks
+  ansible.builtin.include_tasks: "remove-{{ ansible_os_family }}.yml"
+  when: setup is defined and not setup | bool

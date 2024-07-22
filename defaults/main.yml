@@ -6,3 +6,5 @@ cband_limit: ""
 disk_quota: ""
 vhost_domain: ""
 listen_port: ""
+
+setup: true
