@@ -50,12 +50,12 @@
 
 - name: Find the VirtualHost block containing the ServerName
   set_fact:
-    start_index: "{{ vhost_content_str.find('<VirtualHost', vhost_content_str.find('ServerName ' ~ server_name)) }}"
-    end_index: "{{ vhost_content_str.find('</VirtualHost>', vhost_content_str.find('ServerName ' ~ server_name)) + len('</VirtualHost>') }}"
+    start_index: "{{ vhost_content_str.find('<VirtualHost', vhost_content_str.find('ServerName ' ~ vhost_domain)) }}"
+    end_index: "{{ vhost_content_str.find('</VirtualHost>', vhost_content_str.find('ServerName ' ~ vhost_domain)) + len('</VirtualHost>') }}"
 
 - name: Ensure the ServerName and VirtualHost block are found
   fail:
-    msg: "The specified ServerName '{{ server_name }}' was not found in any VirtualHost block."
+    msg: "The specified ServerName '{{ vhost_domain }}' was not found in any VirtualHost block."
   when: start_index == -1 or end_index == -1
 
 - name: Extract the VirtualHost block to be commented
