@@ -28,15 +28,15 @@
   when: user_deleted.changed  # 계정 삭제가 이루어졌을 경우에만 실행됩니다.
 
 # 쿼타 해제
-- name: Clear user's disk quota
-  command: "setquota -u {{ user_id }} 0 0 0 0 -a"
-  when: user_deleted.changed
-  register: quota_cleared
+# - name: Clear user's disk quota
+#   command: "setquota -u {{ user_id }} 0 0 0 0 -a"
+#   when: user_deleted.changed
+#   register: quota_cleared
 
-- name: Check quota clearing result
-  debug:
-    msg: "Quota cleared for user {{ user_id }}"
-  when: quota_cleared.changed
+# - name: Check quota clearing result
+#   debug:
+#     msg: "Quota cleared for user {{ user_id }}"
+#   when: quota_cleared.changed
 
 # vhost 삭제
 - name: Read vhost configuration file
