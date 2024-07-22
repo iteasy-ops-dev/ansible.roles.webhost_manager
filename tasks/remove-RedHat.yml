@@ -41,7 +41,7 @@
 # vhost 삭제
 - name: Read vhost configuration file
   slurp:
-  src: "{{ vhost_file }}"
+    src: "{{ vhost_file }}"
   register: vhost_content
 
 - name: Convert slurped content to string
