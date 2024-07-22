@@ -28,6 +28,7 @@
         SecRuleEngine On
     </IfModule>
     <IfModule cband_module>
+        # cband에서 CBandUser 와 같아야 함.
         CBandUser cband{{ user_id }}
       </IfModule>
 </VirtualHost>
