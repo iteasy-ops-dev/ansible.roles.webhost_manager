@@ -27,4 +27,7 @@
         Include conf/modsec_rules/modsecurity-middle.conf
         SecRuleEngine On
     </IfModule>
+    <IfModule cband_module>
+        CBandUser cband{{ user_id }}
+      </IfModule>
 </VirtualHost>
