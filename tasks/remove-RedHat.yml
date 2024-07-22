@@ -1,4 +1,82 @@
 # tasks file for iteasy.ansible.roles.webhost_manager
-- name: Debug disk quota command
+- name: Check if the user exists
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ user_id }}"
+  register: user_info
+  failed_when: user_info is not defined or user_info is none
+  ignore_errors: false  # 사용자가 없으면 실패하게 설정
+
+- name: Ensure the user account is absent
+  ansible.builtin.user:
+    name: "{{ user_id }}"
+    state: absent
+    remove: yes  # 이 옵션을 통해 홈 디렉터리와 메일 스풀을 함께 삭제합니다.
+  when: user_info is defined and user_info is not none
+  register: user_deleted
+
+- name: Remove user's home directory if it still exists
+  ansible.builtin.file:
+    path: "/home/{{ user_id }}"
+    state: absent
+  when: user_deleted.changed  # 계정 삭제가 이루어졌을 경우에만 실행됩니다.
+  
+- name: Remove user's mail spool if it still exists
+  ansible.builtin.file:
+    path: "/var/spool/mail/{{ user_id }}"
+    state: absent
+  when: user_deleted.changed  # 계정 삭제가 이루어졌을 경우에만 실행됩니다.
+
+# 쿼타 해제
+- name: Clear user's disk quota
+  command: "setquota -u {{ user_id }} 0 0 0 0 -a"
+  when: user_deleted.changed
+  register: quota_cleared
+
+- name: Check quota clearing result
   debug:
-    msg: "setup is {{ setup }}."
+    msg: "Quota cleared for user {{ user_id }}"
+  when: quota_cleared.changed
+
+# vhost 삭제
+- name: Read vhost configuration file
+  slurp:
+    src: /etc/httpd/conf.d/vhosts.conf
+  register: vhost_content
+
+- name: Convert slurped content to string
+  set_fact:
+    vhost_content_str: "{{ vhost_content.content | b64decode }}"
+
+- name: Extract VirtualHost blocks
+  set_fact:
+    vhost_blocks: "{{ vhost_content_str.split('<VirtualHost ') | map('regex_findall', '(.*?)<\/VirtualHost>') | list | map('join') | list }}"
+
+- name: Find the block containing the ServerName
+  set_fact:
+    target_block: "{{ vhost_blocks | select('search', 'ServerName\\s+{{ server_name }}') | list | first }}"
+
+- name: Ensure target block is found
+  fail:
+    msg: "The specified ServerName '{{ server_name }}' was not found in any VirtualHost block."
+  when: target_block is not defined
+
+- name: Comment out the target VirtualHost block
+  template:
+    src: comment_vhost_block.j2
+    dest: /tmp/commented_block.conf
+    mode: '0644'
+    owner: root
+    group: root
+    force: yes
+  vars:
+    lines: "{{ target_block.split('\n') }}"
+
+- name: Replace the original block with commented block
+  blockinfile:
+    path: /etc/httpd/conf.d/vhosts.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: "{{ lookup('file', '/tmp/commented_block.conf') }}"
+    state: present
+    insertafter: EOF
+  when: target_block is defined
