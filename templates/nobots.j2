@@ -1,23 +1,53 @@
 # TODO: 여기에 어떤 구성이 있는지 확인이 필요
 # TODO: 아래 구문은 기본 설정
 # Apache configuration to block unwanted bots
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    # Block known bad bots
-    RewriteCond %{HTTP_USER_AGENT} ^.*(AhrefsBot|SemrushBot|MJ12bot).*$ [NC]
-    RewriteRule ^ - [F,L]
-</IfModule>
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     # Block known bad bots
+#     RewriteCond %{HTTP_USER_AGENT} ^.*(AhrefsBot|SemrushBot|MJ12bot).*$ [NC]
+#     RewriteRule ^ - [F,L]
+# </IfModule>
+# 
+# <IfModule mod_setenvif.c>
+#     SetEnvIfNoCase User-Agent "AhrefsBot" bad_bot
+#     SetEnvIfNoCase User-Agent "SemrushBot" bad_bot
+#     SetEnvIfNoCase User-Agent "MJ12bot" bad_bot
+# </IfModule>
+# 
+# <IfModule mod_access_compat.c>
+#     <RequireAll>
+#         Require all granted
+#         Require not env bad_bot
+#     </RequireAll>
+# </IfModule>
 
-<IfModule mod_setenvif.c>
-    SetEnvIfNoCase User-Agent "AhrefsBot" bad_bot
-    SetEnvIfNoCase User-Agent "SemrushBot" bad_bot
-    SetEnvIfNoCase User-Agent "MJ12bot" bad_bot
-</IfModule>
-
-<IfModule mod_access_compat.c>
-    <RequireAll>
-        Require all granted
-        Require not env bad_bot
-    </RequireAll>
-</IfModule>
-
+# 현재 적용중인 설정
+# $Id$
+#
+RewriteCond %{HTTP_USER_AGENT} ^msnbot            [NC,OR]
+#RewriteCond %{HTTP_USER_AGENT} ^Wget              [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^WebZIP            [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^WebCopier         [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^FlashGet          [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^Teleport          [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^MiniBot           [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^FAST.*WebCrawler  [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^Dllbot            [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^ApacheBench       [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^Offline.*Explorer [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^RPT.*HTTPClient   [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^EmailSiphon       [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^EmailWolf         [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^ExtractorPro      [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^Mozilla.*NEWT     [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^Crescent          [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^CherryPicker      [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^[Ww]eb[Bb]andit   [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^WebEMailExtrac.*  [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^NICErsPRO         [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^Telesoft          [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^Zeus.*Webster     [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^Microsoft.URL     [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^Mozilla/3.Mozilla/2.01 [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^EmailCollector    [NC]
+RewriteRule ^.*$ - [F]

@@ -7,4 +7,10 @@ disk_quota: ""
 vhost_domain: ""
 listen_port: ""
 
+mysql_root_user: ""
+mysql_root_password: ""
+db_user: ""
+db_name: ""
+db_password: ""
+
 setup: true

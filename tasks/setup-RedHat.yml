@@ -1,5 +1,6 @@
 # tasks file for iteasy.ansible.roles.webhost_manager
 #TODO: quota 확인함. 추가하면될 듯
+# 유저 생성
 - name: Ensure group "www" exists
   ansible.builtin.group:
     name: www
@@ -14,20 +15,26 @@
     create_home: yes
     group: www
 
+# 쿼타 설정
 - name: Prepare disk quota command
   set_fact:
     quota_command: >
-      setquota -u {{ user_id }} 
-      {{ (disk_quota == 'unlimited') | ternary('0 0 0 0', ((disk_quota | int * 1024 * 1000)) ~ ' ' ~ ((disk_quota | int * 1024 * 1000)) ~ ' 0 0') }} -a
+      edquota -p test7 -u {{ user_id }} 
+# - name: Prepare disk quota command
+#   set_fact:
+#     quota_command: >
+#       setquota -u {{ user_id }} 
+#       {{ (disk_quota == 'unlimited') | ternary('0 0 0 0', ((disk_quota | int * 1024 * 1000)) ~ ' ' ~ ((disk_quota | int * 1024 * 1000)) ~ ' 0 0') }} -a
 
 - name: Debug disk quota command
   debug:
     msg: "{{ quota_command }}"
 
-- name: Set disk quota
-  command: "{{ quota_command }}"
-  when: disk_quota is defined
+# - name: Set disk quota
+#   command: "{{ quota_command }}"
+#   when: disk_quota is defined
 
+# 유저 폴더 생성
 - name: Create necessary directories with specific modes
   file:
     path: "{{ item.path }}"
@@ -45,6 +52,46 @@
     src: templates/index.html.j2
     dest: /home/{{ user_id }}/www/index.html
 
+# 데이터베이스
+- name: Check if database exists
+  mysql_db:
+    name: "{{ db_name }}"
+    state: present
+    login_user: "{{ mysql_root_user }}"
+    login_password: "{{ mysql_root_password }}"
+  register: db_result
+  failed_when: db_result.db | selectattr('name', 'equalto', db_name) | list | length > 0
+  when: db_name != ""
+
+- name: Ensure MySQL database is present
+  mysql_db:
+    name: "{{ db_name }}"
+    state: present
+    login_user: "{{ mysql_root_user }}"
+    login_password: "{{ mysql_root_password }}"
+  when: db_name != "" and not (db_result.db | selectattr('name', 'equalto', db_name) | list | length > 0)
+
+- name: Check if user exists
+  mysql_user:
+    name: "{{ db_user }}"
+    check_implicit_admin: yes
+    login_user: "{{ mysql_root_user }}"
+    login_password: "{{ mysql_root_password }}"
+  register: user_result
+  failed_when: user_result.user | selectattr('name', 'equalto', db_user) | list | length > 0
+  when: db_name != "" and db_user != ""
+
+- name: Ensure MySQL user is present
+  mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    priv: "{{ db_name }}.*:ALL"
+    state: present
+    login_user: "{{ mysql_root_user }}"
+    login_password: "{{ mysql_root_password }}"
+  when: db_name != "" and db_user != "" and not (user_result.user | selectattr('name', 'equalto', db_user) | list | length > 0)
+
+# conf/nobots.conf
 - name: Check if conf/nobots.conf exists
   stat:
     path: /etc/httpd/conf/nobots.conf
@@ -56,6 +103,7 @@
     dest: /etc/httpd/conf/nobots.conf
   when: not nobots_conf.stat.exists
 
+# conf.d/vhosts.conf
 - name: Backup and configure vhosts.conf
   block:
     - name: Backup vhosts.conf
@@ -102,6 +150,7 @@
     - name: Rename vhosts temporary file to indicate failure
       command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
 
+# conf.d/cband.conf
 - name: Backup and configure cband.conf
   block:
     - name: Backup cband.conf
