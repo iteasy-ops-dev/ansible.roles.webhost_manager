@@ -1,5 +1,4 @@
 # tasks file for iteasy.ansible.roles.webhost_manager
-#TODO: quota 확인함. 추가하면될 듯
 # 유저 생성
 - name: Ensure group "www" exists
   ansible.builtin.group:
@@ -16,6 +15,8 @@
     group: www
 
 # 쿼타 설정
+# TODO: 쿼타 설정을 현재 상황에 맞춰서 그냥 사용 할 것인가
+# TODO: 아니면 동적으로 변경하여 사용 할 수 있게 할 것인가
 - name: Prepare disk quota command
   set_fact:
     quota_command: >

@@ -6,17 +6,17 @@ Ansible Role: Manage Webhost on Linux
 
 생성
 ---
-1. 계정 생성
-2. quota 설정
-3. DB 계정 생성
-4. 트래픽 설정(cband)
-5. vhost 설정
+1. [x] 계정 생성
+2. [x] quota 설정
+3. [x] DB 계정 생성
+4. [x] 트래픽 설정(cband)
+5. [x] vhost 설정
 
 삭제
 ---
-1. 계정 삭제
-2. DB 계정 삭제
-3. vhost 삭제
+1. [x] 계정 삭제
+2. [x] DB 계정 삭제
+3. [ ] vhost 삭제
 
 Requirements
 ------------
@@ -32,11 +32,19 @@ cband_limit: ""
 disk_quota: ""
 vhost_domain: ""
 listen_port: ""
+
+mysql_root_user: ""
+mysql_root_password: ""
+db_user: ""
+db_name: ""
+db_password: ""
+
+setup: true
 ```
 
 Dependencies
 ------------
-None.
+Unknown.
 
 Example Playbook
 ----------------
