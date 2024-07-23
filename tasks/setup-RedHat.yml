@@ -56,80 +56,21 @@
 
 # 데이터베이스
 # 2024/07/23 원격노드에 파이썬 모듈을 설치해야하는 이슈로 인해 쉘로 전환
-# - name: Check if database exists
-#   mysql_db:
-#     name: "{{ db_name }}"
-#     state: present
-#     login_user: "{{ mysql_root_user }}"
-#     login_password: "{{ mysql_root_password }}"
-#   register: db_result
-#   failed_when: db_result.db.0 == db_name
-
-# - name: Ensure MySQL database is present
-#   mysql_db:
-#     name: "{{ db_name }}"
-#     state: present
-#     login_user: "{{ mysql_root_user }}"
-#     login_password: "{{ mysql_root_password }}"
-#   when: not db_result.db.0 == db_name
-
-# - name: Check if user exists
-#   mysql_user:
-#     name: "{{ db_user }}"
-#     check_implicit_admin: yes
-#     login_user: "{{ mysql_root_user }}"
-#     login_password: "{{ mysql_root_password }}"
-#   register: user_result
-#   failed_when: user_result.user.0.name == db_user
-
-# - name: Ensure MySQL user is present
-#   mysql_user:
-#     name: "{{ db_user }}"
-#     password: "{{ db_password }}"
-#     priv: "{{ db_name }}.*:ALL"
-#     state: present
-#     login_user: "{{ mysql_root_user }}"
-#     login_password: "{{ mysql_root_password }}"
-#   when: not user_result.user.0.name == db_user
-# - name: Prepare db command
-#   set_fact:
-#     db_command: >
-#       mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "CREATE DATABASE {{ db_name }};"
-#       mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "CREATE USER '{{ db_user }}'@'localhost' IDENTIFIED BY '{{ db_password }}';"
-#       mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON {{ db_name }}.* TO '{{ db_user }}'@'localhost';"
-#       mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "FLUSH PRIVILEGES;"
-
-# - name: Debug db command
-#   debug:
-#     msg: "{{ db_command }}"
-
-# - name: Set db
-#   command: "{{ db_command }}"
-#   when: db_name is defined
-
-# - name: Create SQL file
-#   copy:
-#     dest: "/tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql"
-#     content: |
-#       CREATE DATABASE {{ db_name }};
-#       CREATE USER '{{ db_user }}'@'localhost' IDENTIFIED BY '{{ db_password }}';
-#       GRANT ALL PRIVILEGES ON {{ db_name }}.* TO '{{ db_user }}'@'localhost';
-#       FLUSH PRIVILEGES;
 - name: Create SQL file
   template:
     src: templates/createDB.j2
     dest: "/tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql"
-  when: db_name is defined
+  when: db_name is defined and db_name != ""
 
 - name: Execute SQL file
   shell: mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql
-  when: db_name is defined
+  when: db_name is defined and db_name != ""
 
 - name: Remove SQL file
   file:
     path: "/tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql"
     state: absent
-  when: db_name is defined
+  when: db_name is defined and db_name != ""
 
 # conf/nobots.conf
 - name: Check if conf/nobots.conf exists
