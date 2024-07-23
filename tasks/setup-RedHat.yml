@@ -107,7 +107,7 @@
 
 - name: Create SQL file
   copy:
-    dest: /tmp/db_setup.sql
+    dest: "/tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql"
     content: |
       CREATE DATABASE {{ db_name }};
       CREATE USER '{{ db_user }}'@'localhost' IDENTIFIED BY '{{ db_password }}';
@@ -116,7 +116,13 @@
 
 - name: Execute SQL file
   command: >
-    mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} < /tmp/db_setup.sql
+    mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql
+  when: db_name is defined
+
+- name: Remove SQL file
+  file:
+    path: "/tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql"
+    state: absent
   when: db_name is defined
 
 # conf/nobots.conf

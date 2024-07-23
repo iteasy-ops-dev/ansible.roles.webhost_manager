@@ -8,7 +8,7 @@ vhost_domain: "example.com"
 listen_port: "80"
 
 mysql_root_user: "root"
-mysql_root_password: "1123"
+mysql_root_password: "jZ(-4]W%$m3pfRB"
 db_user: "iteasy_db_user"
 db_name: "iteasy_db"
 db_password: "iteasy_pwd"
