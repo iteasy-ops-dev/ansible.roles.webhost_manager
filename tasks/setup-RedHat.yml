@@ -89,20 +89,34 @@
 #     login_user: "{{ mysql_root_user }}"
 #     login_password: "{{ mysql_root_password }}"
 #   when: not user_result.user.0.name == db_user
-- name: Prepare db command
-  set_fact:
-    db_command: >
-      mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "CREATE DATABASE {{ db_name }};"
-      mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "CREATE USER '{{ db_user }}'@'localhost' IDENTIFIED BY '{{ db_password }}';"
-      mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON {{ db_name }}.* TO '{{ db_user }}'@'localhost';"
-      mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "FLUSH PRIVILEGES;"
+# - name: Prepare db command
+#   set_fact:
+#     db_command: >
+#       mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "CREATE DATABASE {{ db_name }};"
+#       mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "CREATE USER '{{ db_user }}'@'localhost' IDENTIFIED BY '{{ db_password }}';"
+#       mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON {{ db_name }}.* TO '{{ db_user }}'@'localhost';"
+#       mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "FLUSH PRIVILEGES;"
 
-- name: Debug db command
-  debug:
-    msg: "{{ db_command }}"
+# - name: Debug db command
+#   debug:
+#     msg: "{{ db_command }}"
 
-- name: Set db
-  command: "{{ db_command }}"
+# - name: Set db
+#   command: "{{ db_command }}"
+#   when: db_name is defined
+
+- name: Create SQL file
+  copy:
+    dest: /tmp/db_setup.sql
+    content: |
+      CREATE DATABASE {{ db_name }};
+      CREATE USER '{{ db_user }}'@'localhost' IDENTIFIED BY '{{ db_password }}';
+      GRANT ALL PRIVILEGES ON {{ db_name }}.* TO '{{ db_user }}'@'localhost';
+      FLUSH PRIVILEGES;
+
+- name: Execute SQL file
+  command: >
+    mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} < /tmp/db_setup.sql
   when: db_name is defined
 
 # conf/nobots.conf
