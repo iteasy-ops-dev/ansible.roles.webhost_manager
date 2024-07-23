@@ -7,7 +7,7 @@ Ansible Role: Manage Webhost on Linux
 생성
 ---
 1. [x] 계정 생성
-2. [x] quota 설정
+2. [x] quota 설정 * 제외 예정
 3. [x] DB 계정 생성
 4. [x] 트래픽 설정(cband)
 5. [x] vhost 설정

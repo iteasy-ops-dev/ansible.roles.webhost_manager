@@ -17,15 +17,16 @@
 # 쿼타 설정
 # TODO: 쿼타 설정을 현재 상황에 맞춰서 그냥 사용 할 것인가
 # TODO: 아니면 동적으로 변경하여 사용 할 수 있게 할 것인가
-- name: Prepare disk quota command
-  set_fact:
-    quota_command: >
-      edquota -p test7 -u {{ user_id }} 
+# TODO: 일단 생략하기로 함
 # - name: Prepare disk quota command
 #   set_fact:
 #     quota_command: >
-#       setquota -u {{ user_id }} 
-#       {{ (disk_quota == 'unlimited') | ternary('0 0 0 0', ((disk_quota | int * 1024 * 1000)) ~ ' ' ~ ((disk_quota | int * 1024 * 1000)) ~ ' 0 0') }} -a
+#       edquota -p test7 -u {{ user_id }} 
+- name: Prepare disk quota command
+  set_fact:
+    quota_command: >
+      setquota -u {{ user_id }} 
+      {{ (disk_quota == 'unlimited') | ternary('0 0 0 0', ((disk_quota | int * 1024 * 1000)) ~ ' ' ~ ((disk_quota | int * 1024 * 1000)) ~ ' 0 0') }} -a
 
 - name: Debug disk quota command
   debug:
@@ -106,14 +107,18 @@
 #   command: "{{ db_command }}"
 #   when: db_name is defined
 
+# - name: Create SQL file
+#   copy:
+#     dest: "/tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql"
+#     content: |
+#       CREATE DATABASE {{ db_name }};
+#       CREATE USER '{{ db_user }}'@'localhost' IDENTIFIED BY '{{ db_password }}';
+#       GRANT ALL PRIVILEGES ON {{ db_name }}.* TO '{{ db_user }}'@'localhost';
+#       FLUSH PRIVILEGES;
 - name: Create SQL file
-  copy:
+  template:
+    src: templates/createDB.j2
     dest: "/tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql"
-    content: |
-      CREATE DATABASE {{ db_name }};
-      CREATE USER '{{ db_user }}'@'localhost' IDENTIFIED BY '{{ db_password }}';
-      GRANT ALL PRIVILEGES ON {{ db_name }}.* TO '{{ db_user }}'@'localhost';
-      FLUSH PRIVILEGES;
 
 - name: Execute SQL file
   shell: mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql

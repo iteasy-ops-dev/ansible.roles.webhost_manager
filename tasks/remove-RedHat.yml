@@ -28,12 +28,16 @@
   when: user_deleted.changed  # 계정 삭제가 이루어졌을 경우에만 실행됩니다.
 
 # DB
+# - name: Create SQL file
+#   copy:
+#     dest: "/tmp/db_drop_{{ ansible_date_time.iso8601_basic_short }}.sql"
+#     content: |
+#       DROP DATABASE IF EXISTS {{ db_name }};
+#       DROP USER IF EXISTS '{{ db_user }}'@'localhost';
 - name: Create SQL file
-  copy:
+  template:
+    src: templates/removeDB.j2
     dest: "/tmp/db_drop_{{ ansible_date_time.iso8601_basic_short }}.sql"
-    content: |
-      DROP DATABASE IF EXISTS {{ db_name }};
-      DROP USER IF EXISTS '{{ db_user }}'@'localhost';
 
 - name: Execute SQL file
   shell: mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_drop_{{ ansible_date_time.iso8601_basic_short }}.sql
