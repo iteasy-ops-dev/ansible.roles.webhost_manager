@@ -53,43 +53,67 @@
     dest: /home/{{ user_id }}/www/index.html
 
 # 데이터베이스
+# 2024/07/23 원격노드에 파이썬 모듈을 설치해야하는 이슈로 인해 쉘로 전환
+# - name: Check if database exists
+#   mysql_db:
+#     name: "{{ db_name }}"
+#     state: present
+#     login_user: "{{ mysql_root_user }}"
+#     login_password: "{{ mysql_root_password }}"
+#   register: db_result
+#   failed_when: db_result.db.0 == db_name
+
+# - name: Ensure MySQL database is present
+#   mysql_db:
+#     name: "{{ db_name }}"
+#     state: present
+#     login_user: "{{ mysql_root_user }}"
+#     login_password: "{{ mysql_root_password }}"
+#   when: not db_result.db.0 == db_name
+
+# - name: Check if user exists
+#   mysql_user:
+#     name: "{{ db_user }}"
+#     check_implicit_admin: yes
+#     login_user: "{{ mysql_root_user }}"
+#     login_password: "{{ mysql_root_password }}"
+#   register: user_result
+#   failed_when: user_result.user.0.name == db_user
+
+# - name: Ensure MySQL user is present
+#   mysql_user:
+#     name: "{{ db_user }}"
+#     password: "{{ db_password }}"
+#     priv: "{{ db_name }}.*:ALL"
+#     state: present
+#     login_user: "{{ mysql_root_user }}"
+#     login_password: "{{ mysql_root_password }}"
+#   when: not user_result.user.0.name == db_user
 - name: Check if database exists
-  mysql_db:
-    name: "{{ db_name }}"
-    state: present
-    login_user: "{{ mysql_root_user }}"
-    login_password: "{{ mysql_root_password }}"
-  register: db_result
-  failed_when: db_result.db | selectattr('name', 'equalto', db_name) | list | length > 0
+  shell: mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "SHOW DATABASES LIKE '{{ db_name }}';"
+  register: db_check
+  changed_when: false
+  failed_when: db_check.stdout.find(db_name) != -1
   when: db_name != ""
 
-- name: Ensure MySQL database is present
-  mysql_db:
-    name: "{{ db_name }}"
-    state: present
-    login_user: "{{ mysql_root_user }}"
-    login_password: "{{ mysql_root_password }}"
-  when: db_name != "" and not (db_result.db | selectattr('name', 'equalto', db_name) | list | length > 0)
+- name: Create MySQL database if it does not exist
+  shell: mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "CREATE DATABASE {{ db_name }};"
+  when: db_name != "" and db_check.stdout.find(db_name) == -1
 
 - name: Check if user exists
-  mysql_user:
-    name: "{{ db_user }}"
-    check_implicit_admin: yes
-    login_user: "{{ mysql_root_user }}"
-    login_password: "{{ mysql_root_password }}"
-  register: user_result
-  failed_when: user_result.user | selectattr('name', 'equalto', db_user) | list | length > 0
-  when: db_name != "" and db_user != ""
+  shell: mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "SELECT User FROM mysql.user WHERE User='{{ db_user }}';"
+  register: user_check
+  changed_when: false
+  failed_when: user_check.stdout.find(db_user) != -1
+  when: db_user != ""
 
-- name: Ensure MySQL user is present
-  mysql_user:
-    name: "{{ db_user }}"
-    password: "{{ db_password }}"
-    priv: "{{ db_name }}.*:ALL"
-    state: present
-    login_user: "{{ mysql_root_user }}"
-    login_password: "{{ mysql_root_password }}"
-  when: db_name != "" and db_user != "" and not (user_result.user | selectattr('name', 'equalto', db_user) | list | length > 0)
+- name: Create MySQL user if it does not exist
+  shell: mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "CREATE USER '{{ db_user }}'@'%' IDENTIFIED BY '{{ db_password }}';"
+  when: db_user != "" and user_check.stdout.find(db_user) == -1
+
+- name: Grant privileges to the MySQL user
+  shell: mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "GRANT ALL PRIVILEGES ON {{ db_name }}.* TO '{{ db_user }}'@'%'; FLUSH PRIVILEGES;"
+  when: db_user != "" and db_name != "" and user_check.stdout.find(db_user) == -1
 
 # conf/nobots.conf
 - name: Check if conf/nobots.conf exists
