@@ -27,6 +27,20 @@
     state: absent
   when: user_deleted.changed  # 계정 삭제가 이루어졌을 경우에만 실행됩니다.
 
+- name: Prepare db command
+  set_fact:
+    db_command: >
+      mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "DROP DATABASE IF EXISTS {{ db_name }};"
+      mysql -u {{ mysql_root_user }} -p{{ mysql_root_password }} -e "DROP USER IF EXISTS '{{ db_user }}'@'localhost';"
+
+- name: Debug db command
+  debug:
+    msg: "{{ db_command }}"
+
+- name: Drop db
+  command: "{{ db_command }}"
+  when: db_name is defined
+
 # 쿼타 해제
 # - name: Clear user's disk quota
 #   command: "setquota -u {{ user_id }} 0 0 0 0 -a"
