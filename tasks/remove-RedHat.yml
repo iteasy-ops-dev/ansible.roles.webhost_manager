@@ -36,9 +36,12 @@
       DROP USER IF EXISTS '{{ db_user }}'@'localhost';
 
 - name: Execute SQL file
-  command: >
-    mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_drop_{{ ansible_date_time.iso8601_basic_short }}.sql
+  shell: mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_drop_{{ ansible_date_time.iso8601_basic_short }}.sql
   when: db_name is defined
+# - name: Execute SQL file
+#   command: >
+#     mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_drop_{{ ansible_date_time.iso8601_basic_short }}.sql
+#   when: db_name is defined
 
 - name: Remove SQL file
   file:
