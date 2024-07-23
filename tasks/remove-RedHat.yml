@@ -38,16 +38,17 @@
   template:
     src: templates/removeDB.j2
     dest: "/tmp/db_drop_{{ ansible_date_time.iso8601_basic_short }}.sql"
+  when: db_name is defined and db_name != "" and db_user is defined and db_user != ""
 
 - name: Execute SQL file
   shell: mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_drop_{{ ansible_date_time.iso8601_basic_short }}.sql
-  when: db_name is defined
+  when: db_name is defined and db_name != "" and db_user is defined and db_user != ""
 
 - name: Remove SQL file
   file:
     path: "/tmp/db_drop_{{ ansible_date_time.iso8601_basic_short }}.sql"
     state: absent
-  when: db_name is defined
+  when: db_name is defined and db_name != "" and db_user is defined and db_user != ""
 
 # 쿼타 해제
 # - name: Clear user's disk quota

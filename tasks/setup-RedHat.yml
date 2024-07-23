@@ -60,17 +60,17 @@
   template:
     src: templates/createDB.j2
     dest: "/tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql"
-  when: db_name is defined and db_name != ""
+  when: db_name is defined and db_name != "" and db_user is defined and db_user != ""
 
 - name: Execute SQL file
   shell: mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql
-  when: db_name is defined and db_name != ""
+  when: db_name is defined and db_name != "" and db_user is defined and db_user != ""
 
 - name: Remove SQL file
   file:
     path: "/tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql"
     state: absent
-  when: db_name is defined and db_name != ""
+  when: db_name is defined and db_name != "" and db_user is defined and db_user != ""
 
 # conf/nobots.conf
 - name: Check if conf/nobots.conf exists
