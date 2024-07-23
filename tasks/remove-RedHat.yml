@@ -21,11 +21,11 @@
     state: absent
   when: user_deleted.changed  # 계정 삭제가 이루어졌을 경우에만 실행됩니다.
   
-# - name: Remove user's mail spool if it still exists
-#   ansible.builtin.file:
-#     path: "/var/spool/mail/{{ user_id }}"
-#     state: absent
-#   when: user_deleted.changed  # 계정 삭제가 이루어졌을 경우에만 실행됩니다.
+- name: Remove user's mail spool if it still exists
+  ansible.builtin.file:
+    path: "/var/spool/mail/{{ user_id }}"
+    state: absent
+  when: user_deleted.changed  # 계정 삭제가 이루어졌을 경우에만 실행됩니다.
 
 # DB
 - name: Create SQL file
@@ -38,10 +38,6 @@
 - name: Execute SQL file
   shell: mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_drop_{{ ansible_date_time.iso8601_basic_short }}.sql
   when: db_name is defined
-# - name: Execute SQL file
-#   command: >
-#     mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_drop_{{ ansible_date_time.iso8601_basic_short }}.sql
-#   when: db_name is defined
 
 - name: Remove SQL file
   file:
