@@ -27,14 +27,16 @@
     quota_command: >
       setquota -u {{ user_id }} 
       {{ (disk_quota == 'unlimited') | ternary('0 0 0 0', ((disk_quota | int * 1024 * 1000)) ~ ' ' ~ ((disk_quota | int * 1024 * 1000)) ~ ' 0 0') }} -a
+  when: disk_quota is defined and disk_quota != ""
 
 - name: Debug disk quota command
   debug:
     msg: "{{ quota_command }}"
+  when: disk_quota is defined and disk_quota != ""
 
-# - name: Set disk quota
-#   command: "{{ quota_command }}"
-#   when: disk_quota is defined
+- name: Set disk quota
+  command: "{{ quota_command }}"
+  when: disk_quota is defined and disk_quota != ""
 
 # 유저 폴더 생성
 - name: Create necessary directories with specific modes
@@ -48,6 +50,7 @@
     - { path: "/home/{{ user_id }}", mode: "0701" }
     - { path: "/home/{{ user_id }}/www", mode: "0755" }
     - { path: "/etc/httpd/logs/vhosts/{{ user_id }}", mode: "0701" }
+    - { path: "/etc/httpd/conf.d/{{ user_id }}", mode: "0701" } # 유저별 conf 폴더 추가
 
 - name: Create index.html from template
   template:
@@ -85,6 +88,7 @@
   when: not nobots_conf.stat.exists
 
 # conf.d/vhosts.conf
+# TODO: vhosts 파일 정책에 따라 코드가 달라질 가능성이 존재
 - name: Backup and configure vhosts.conf
   block:
     - name: Backup vhosts.conf
@@ -114,24 +118,38 @@
       register: slurped_file
       when: tempfile_status.stat.exists
 
+    # 계정명으로 된 폴더에 하위에 위치하는 것 테스트
     - name: Merge vhosts configuration
       lineinfile:
-        path: /etc/httpd/conf.d/vhosts.conf
+        path: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
         insertafter: EOF
         line: "{{ slurped_file.content | b64decode }}"
       when: tempfile_status.stat.exists
+    # - name: Merge vhosts configuration
+    #   lineinfile:
+    #     path: /etc/httpd/conf.d/vhosts.conf
+    #     insertafter: EOF
+    #     line: "{{ slurped_file.content | b64decode }}"
+    #   when: tempfile_status.stat.exists
 
   rescue:
     - name: Restore backup of vhosts.conf
       copy:
-        src: /etc/httpd/conf.d/vhosts.conf.old
-        dest: /etc/httpd/conf.d/vhosts.conf
+        src: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf.old
+        dest: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
         remote_src: yes
+    # - name: Restore backup of vhosts.conf
+    #   copy:
+    #     src: /etc/httpd/conf.d/vhosts.conf.old
+    #     dest: /etc/httpd/conf.d/vhosts.conf
+    #     remote_src: yes
 
     - name: Rename vhosts temporary file to indicate failure
       command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
 
 # conf.d/cband.conf
+# TODO: cband 파일 정책에 따라 코드가 달라질 가능성이 존재
+# TODO: cband_limit 변수의 할당 여부에 따라 예외처리
 - name: Backup and configure cband.conf
   block:
     - name: Backup cband.conf
@@ -163,17 +181,28 @@
 
     - name: Merge cband configuration
       lineinfile:
-        path: /etc/httpd/conf.d/cband.conf
+        path: /etc/httpd/conf.d/{{ user_id }}/cband.conf
         insertafter: EOF
         line: "{{ slurped_file.content | b64decode }}"
       when: tempfile_status.stat.exists
+    # - name: Merge cband configuration
+    #   lineinfile:
+    #     path: /etc/httpd/conf.d/cband.conf
+    #     insertafter: EOF
+    #     line: "{{ slurped_file.content | b64decode }}"
+    #   when: tempfile_status.stat.exists
 
   rescue:
     - name: Restore backup of cband.conf
       copy:
-        src: /etc/httpd/conf.d/cband.conf.old
-        dest: /etc/httpd/conf.d/cband.conf
+        src: /etc/httpd/conf.d/{{ user_id }}/cband.conf.old
+        dest: /etc/httpd/conf.d/{{ user_id }}/cband.conf
         remote_src: yes
+    # - name: Restore backup of cband.conf
+    #   copy:
+    #     src: /etc/httpd/conf.d/cband.conf.old
+    #     dest: /etc/httpd/conf.d/cband.conf
+    #     remote_src: yes
 
     - name: Rename cband temporary file to indicate failure
       command: mv /tmp/cband.conf_tempfile /tmp/cband.conf_tempfile_failed
