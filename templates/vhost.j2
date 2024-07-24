@@ -28,9 +28,11 @@
         Include conf/modsec_rules/modsecurity-middle.conf
         SecRuleEngine On
     </IfModule>
+    {% if cband_limit is defined and cband_limit != "" %}
     <IfModule cband_module>
         # cband에서 CBandUser 와 같아야 함.
         CBandUser cband{{ user_id }}
-      </IfModule>
+    </IfModule>
+    {% endif %}
 </VirtualHost>
 # ANSIBLE MANAGED BLOCK

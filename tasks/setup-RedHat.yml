@@ -120,6 +120,7 @@
       when: tempfile_status.stat.exists
 
     # 설정파일 뒤에 user 붙이는 것 테스트
+    # 소유권을 어떻게 할 것인가
     - name: Create and merge vhosts configuration
       copy:
         content: "{{ slurped_file.content | b64decode }}"
@@ -222,12 +223,13 @@
     #     insertafter: EOF
     #     line: "{{ slurped_file.content | b64decode }}"
     #   when: tempfile_status.stat.exists
+  when: cband_limit is defined and cband_limit != ""
 
   rescue:
     - name: Restore backup of cband.conf
       copy:
         src: /etc/httpd/conf.d/{{ user_id }}_cband.conf.old
-        dest: //etc/httpd/conf.d/{{ user_id }}_cband.conf
+        dest: /etc/httpd/conf.d/{{ user_id }}_cband.conf
         remote_src: yes
     # - name: Restore backup of cband.conf
     #   copy:
