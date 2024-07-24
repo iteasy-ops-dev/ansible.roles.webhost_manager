@@ -119,12 +119,22 @@
       when: tempfile_status.stat.exists
 
     # 계정명으로 된 폴더에 하위에 위치하는 것 테스트
-    - name: Merge vhosts configuration
-      lineinfile:
-        path: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
-        insertafter: EOF
-        line: "{{ slurped_file.content | b64decode }}"
+    - name: Create and merge vhosts configuration
+      copy:
+        content: "{{ slurped_file.content | b64decode }}"
+        dest: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
+        owner: "{{ user_id }}"
+        group: www
+        mode: '0644'
       when: tempfile_status.stat.exists
+    # ---------- lineinfile는 파일이 없을 경우 에러를 뱉으므로 copy로 수정
+    # - name: Merge vhosts configuration
+    #   lineinfile:
+    #     path: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
+    #     insertafter: EOF
+    #     line: "{{ slurped_file.content | b64decode }}"
+    #   when: tempfile_status.stat.exists
+    # ---------- 기존 코드
     # - name: Merge vhosts configuration
     #   lineinfile:
     #     path: /etc/httpd/conf.d/vhosts.conf
@@ -179,11 +189,14 @@
       register: slurped_file
       when: tempfile_status.stat.exists
 
-    - name: Merge cband configuration
-      lineinfile:
-        path: /etc/httpd/conf.d/{{ user_id }}/cband.conf
-        insertafter: EOF
-        line: "{{ slurped_file.content | b64decode }}"
+    # 해당 코드의 변천사는 위 vhost와 동일
+    - name: Create and merge vhosts configuration
+      copy:
+        content: "{{ slurped_file.content | b64decode }}"
+        dest: /etc/httpd/conf.d/{{ user_id }}/cband.conf
+        owner: "{{ user_id }}"
+        group: www
+        mode: '0644'
       when: tempfile_status.stat.exists
     # - name: Merge cband configuration
     #   lineinfile:
