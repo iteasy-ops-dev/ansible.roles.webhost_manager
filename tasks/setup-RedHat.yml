@@ -92,11 +92,11 @@
 # TODO: vhosts 파일 정책에 따라 코드가 달라질 가능성이 존재
 - name: Backup and configure vhosts.conf
   block:
-    - name: Backup vhosts.conf
-      copy:
-        src: /etc/httpd/conf.d/vhosts_{{ user_id }}.conf
-        dest: /etc/httpd/conf.d/vhosts_{{ user_id }}.conf.old
-        remote_src: yes
+    # - name: Backup vhosts.conf
+    #   copy:
+    #     src: /etc/httpd/conf.d/vhosts_{{ user_id }}.conf
+    #     dest: /etc/httpd/conf.d/vhosts_{{ user_id }}.conf.old
+    #     remote_src: yes
 
     - name: Configure vhosts.conf
       template:
@@ -180,11 +180,11 @@
 # TODO: cband_limit 변수의 할당 여부에 따라 예외처리
 - name: Backup and configure cband.conf
   block:
-    - name: Backup cband.conf
-      copy:
-        src: /etc/httpd/conf.d/cband_{{ user_id }}.conf
-        dest: /etc/httpd/conf.d/cband_{{ user_id }}.conf.old
-        remote_src: yes
+    # - name: Backup cband.conf
+    #   copy:
+    #     src: /etc/httpd/conf.d/cband_{{ user_id }}.conf
+    #     dest: /etc/httpd/conf.d/cband_{{ user_id }}.conf.old
+    #     remote_src: yes
 
     - name: Configure cband.conf
       template:
