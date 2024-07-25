@@ -67,6 +67,8 @@
 # TODO: 해당 구성 파일에 대한 구문을 찾고
 # TODO: 삭제하던지 주석처리를 하던지 해야하는데
 # TODO: 이걸 어떻게 처리하는게 좋은것인가
+
+# 폴더 삭제 용
 - name: Check if vhost directory exists
   stat:
     path: "/etc/httpd/conf.d/{{ user_id }}"
@@ -78,6 +80,7 @@
     state: absent
   when: conf_dir.stat.isdir and conf_dir.stat.exists
 
+# 파일 삭제 용
 # - name: Check if vhost file exists
 #   stat:
 #     path: "/etc/httpd/conf.d/{{ user_id }}_vhosts.conf"
