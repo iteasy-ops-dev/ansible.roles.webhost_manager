@@ -67,24 +67,46 @@
 # TODO: 해당 구성 파일에 대한 구문을 찾고
 # TODO: 삭제하던지 주석처리를 하던지 해야하는데
 # TODO: 이걸 어떻게 처리하는게 좋은것인가
-- name: Check if vhost file exists
+- name: Check if vhost directory exists
   stat:
-    path: "/etc/httpd/conf.d/{{ user_id }}_vhosts.conf"
-  register: vhost_file
+    path: "/etc/httpd/conf.d/{{ user_id }}"
+  register: vhost_dir
 
-- name: Remove vhost file if it exists
+- name: Remove vhost directory if it exists and is empty
   file:
-    path: "/etc/httpd/conf.d/{{ user_id }}_vhosts.conf"
+    path: "/etc/httpd/conf.d/{{ user_id }}"
     state: absent
-  when: vhost_file.stat.exists
+  when: vhost_dir.stat.isdir and vhost_dir.stat.exists
 
-- name: Check if cband file exists
+- name: Check if cband directory exists
   stat:
-    path: "/etc/httpd/conf.d/{{ user_id }}_cband.conf"
-  register: cband_file
+    path: "/etc/httpd/conf.d/{{ user_id }}"
+  register: cband_dir
 
-- name: Remove cband file if it exists
+- name: Remove cband directory if it exists and is empty
   file:
-    path: "/etc/httpd/conf.d/{{ user_id }}_cband.conf"
+    path: "/etc/httpd/conf.d/{{ user_id }}"
     state: absent
-  when: cband_file.stat.exists
+  when: cband_dir.stat.isdir and cband_dir.stat.exists
+
+# - name: Check if vhost file exists
+#   stat:
+#     path: "/etc/httpd/conf.d/{{ user_id }}_vhosts.conf"
+#   register: vhost_file
+
+# - name: Remove vhost file if it exists
+#   file:
+#     path: "/etc/httpd/conf.d/{{ user_id }}_vhosts.conf"
+#     state: absent
+#   when: vhost_file.stat.exists
+
+# - name: Check if cband file exists
+#   stat:
+#     path: "/etc/httpd/conf.d/{{ user_id }}_cband.conf"
+#   register: cband_file
+
+# - name: Remove cband file if it exists
+#   file:
+#     path: "/etc/httpd/conf.d/{{ user_id }}_cband.conf"
+#     state: absent
+#   when: cband_file.stat.exists
