@@ -70,24 +70,13 @@
 - name: Check if vhost directory exists
   stat:
     path: "/etc/httpd/conf.d/{{ user_id }}"
-  register: vhost_dir
+  register: conf_dir
 
 - name: Remove vhost directory if it exists and is empty
   file:
     path: "/etc/httpd/conf.d/{{ user_id }}"
     state: absent
-  when: vhost_dir.stat.isdir and vhost_dir.stat.exists
-
-- name: Check if cband directory exists
-  stat:
-    path: "/etc/httpd/conf.d/{{ user_id }}"
-  register: cband_dir
-
-- name: Remove cband directory if it exists and is empty
-  file:
-    path: "/etc/httpd/conf.d/{{ user_id }}"
-    state: absent
-  when: cband_dir.stat.isdir and cband_dir.stat.exists
+  when: conf_dir.stat.isdir and conf_dir.stat.exists
 
 # - name: Check if vhost file exists
 #   stat:
