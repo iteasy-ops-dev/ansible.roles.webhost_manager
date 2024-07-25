@@ -220,7 +220,7 @@
     - name: Create and merge vhosts configuration
       copy:
         content: "{{ slurped_file.content | b64decode }}"
-        dest: /etc/httpd/conf.d/{{ user_id }}_cband.conf
+        dest: /etc/httpd/conf.d/{{ user_id }}/cband.conf
         owner: "{{ user_id }}"
         group: www
         mode: '0644'
