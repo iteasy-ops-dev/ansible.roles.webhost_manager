@@ -51,7 +51,7 @@
     - { path: "/home/{{ user_id }}/www", mode: "0755" }
     - { path: "/etc/httpd/logs/vhosts/{{ user_id }}", mode: "0701" }
     # 논의 후 방향에 따라 달라질 것
-    # - { path: "/etc/httpd/conf.d/{{ user_id }}", mode: "0701" } # 유저별 conf 폴더 추가
+    - { path: "/etc/httpd/conf.d/{{ user_id }}", mode: "0701" } # 유저별 conf 폴더 추가
 
 - name: Create index.html from template
   template:
