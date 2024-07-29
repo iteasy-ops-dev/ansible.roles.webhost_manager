@@ -1,4 +1,13 @@
 # tasks file for iteasy.ansible.roles.webhost_manager
+- name: Ensure IncludeOptional conf.d/*.conf and conf.d/**/*.conf exist in httpd.conf
+  lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    insertafter: EOF
+    regexp: '^IncludeOptional\s+conf\.d/.*\.conf$'
+    line: |
+      IncludeOptional conf.d/*.conf
+      IncludeOptional conf.d/**/*.conf
+
 # 유저 생성
 - name: Ensure group "www" exists
   ansible.builtin.group:
