@@ -1,3 +1,310 @@
+# # tasks file for iteasy.ansible.roles.webhost_manager
+# - name: Check if IncludeOptional conf.d/*.conf exists in httpd.conf
+#   lineinfile:
+#     path: /etc/httpd/conf/httpd.conf
+#     line: IncludeOptional conf.d/*.conf
+#     state: present
+#     insertafter: EOF
+
+# - name: Check if IncludeOptional conf.d/**/*.conf exists in httpd.conf
+#   lineinfile:
+#     path: /etc/httpd/conf/httpd.conf
+#     line: IncludeOptional conf.d/**/*.conf
+#     state: present
+#     insertafter: EOF
+
+# # 유저 생성
+# - name: Ensure group "www" exists
+#   ansible.builtin.group:
+#     name: www
+#     state: present
+
+# - name: Ensure user exists
+#   user:
+#     name: "{{ user_id }}"
+#     password: "{{ user_pass | password_hash('sha512') }}"
+#     shell: /bin/bash
+#     home: "/home/{{ user_id }}"
+#     create_home: yes
+#     group: www
+
+# # 쿼타 설정
+# # TODO: 쿼타 설정을 현재 상황에 맞춰서 그냥 사용 할 것인가
+# # TODO: 아니면 동적으로 변경하여 사용 할 수 있게 할 것인가
+# # TODO: 일단 생략하기로 함
+# # - name: Prepare disk quota command
+# #   set_fact:
+# #     quota_command: >
+# #       edquota -p test7 -u {{ user_id }} 
+# - name: Prepare disk quota command
+#   set_fact:
+#     quota_command: >
+#       setquota -u {{ user_id }} 
+#       {{ (disk_quota == 'unlimited') | ternary('0 0 0 0', ((disk_quota | int * 1024 * 1000)) ~ ' ' ~ ((disk_quota | int * 1024 * 1000)) ~ ' 0 0') }} -a
+#   when: disk_quota is defined and disk_quota != ""
+
+# - name: Debug disk quota command
+#   debug:
+#     msg: "{{ quota_command }}"
+#   when: disk_quota is defined and disk_quota != ""
+
+# - name: Set disk quota
+#   command: "{{ quota_command }}"
+#   when: disk_quota is defined and disk_quota != ""
+
+# # 유저 폴더 생성
+# - name: Create necessary directories with specific modes
+#   file:
+#     path: "{{ item.path }}"
+#     state: directory
+#     owner: "{{ user_id }}"
+#     group: www
+#     mode: "{{ item.mode }}"
+#   with_items:
+#     - { path: "/home/{{ user_id }}", mode: "0701" }
+#     - { path: "/home/{{ user_id }}/www", mode: "0755" }
+#     - { path: "/etc/httpd/logs/vhosts/{{ user_id }}", mode: "0701" }
+#     # 논의 후 방향에 따라 달라질 것
+#     - { path: "/etc/httpd/conf.d/{{ user_id }}", mode: "0701" } # 유저별 conf 폴더 추가
+
+# - name: Create index.html from template
+#   template:
+#     src: templates/index.html.j2
+#     dest: /home/{{ user_id }}/www/index.html
+
+# # 데이터베이스
+# # 2024/07/23 원격노드에 파이썬 모듈을 설치해야하는 이슈로 인해 쉘로 전환
+# - name: Create SQL file
+#   template:
+#     src: templates/createDB.j2
+#     dest: "/tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql"
+#   when: db_name is defined and db_name != "" and db_user is defined and db_user != ""
+
+# - name: Execute SQL file
+#   shell: mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' < /tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql
+#   when: db_name is defined and db_name != "" and db_user is defined and db_user != ""
+
+# - name: Remove SQL file
+#   file:
+#     path: "/tmp/db_setup_{{ ansible_date_time.iso8601_basic_short }}.sql"
+#     state: absent
+#   when: db_name is defined and db_name != "" and db_user is defined and db_user != ""
+
+# # conf/nobots.conf
+# - name: Check if conf/nobots.conf exists
+#   stat:
+#     path: /etc/httpd/conf/nobots.conf
+#   register: nobots_conf
+
+# - name: Create nobots.conf from template if it does not exist
+#   template:
+#     src: templates/nobots.j2
+#     dest: /etc/httpd/conf/nobots.conf
+#   when: not nobots_conf.stat.exists
+
+# # conf.d/vhosts.conf
+# # TODO: vhosts 파일 정책에 따라 코드가 달라질 가능성이 존재
+# - name: Backup and configure vhosts.conf
+#   block:
+#     # - name: Backup vhosts.conf
+#     #   copy:
+#     #     src: /etc/httpd/conf.d/vhosts_{{ user_id }}.conf
+#     #     dest: /etc/httpd/conf.d/vhosts_{{ user_id }}.conf.old
+#     #     remote_src: yes
+
+#     - name: Configure vhosts.conf
+#       template:
+#         src: vhost.j2
+#         dest: /tmp/vhosts.conf_tempfile
+
+#     - name: Debug vhosts.conf_tempfile existence
+#       stat:
+#         path: /tmp/vhosts.conf_tempfile
+#       register: tempfile_status
+
+#     - name: Ensure vhosts.conf_tempfile exists
+#       fail:
+#         msg: "Temporary file /tmp/vhosts.conf_tempfile was not created by template."
+#       when: not tempfile_status.stat.exists
+
+#     - name: Slurp vhosts.conf_tempfile content
+#       ansible.builtin.slurp:
+#         src: /tmp/vhosts.conf_tempfile
+#       register: slurped_file
+#       when: tempfile_status.stat.exists
+
+#     # 설정파일 뒤에 user 붙이는 것 테스트
+#     # 소유권을 어떻게 할 것인가
+#     # - name: Create and merge vhosts configuration
+#     #   copy:
+#     #     content: "{{ slurped_file.content | b64decode }}"
+#     #     dest: /etc/httpd/conf.d/{{ user_id }}_vhosts.conf
+#     #     owner: "{{ user_id }}"
+#     #     group: www
+#     #     mode: '0644'
+#     #   when: tempfile_status.stat.exists
+#     # 계정명으로 된 폴더에 하위에 위치하는 것 테스트
+#     # 폴더를 재귀적으로는 참조하지 않으므로 안됨
+#     # 하지만 conf/httpd.conf에서 설정한다면 될지도?
+#     # 그렇게 하기에는 수정사항이 너무 많아지므로 보류
+#     - name: Create and merge vhosts configuration
+#       copy:
+#         content: "{{ slurped_file.content | b64decode }}"
+#         dest: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
+#         owner: "{{ user_id }}"
+#         group: www
+#         mode: '0644'
+#       when: tempfile_status.stat.exists
+#     # ---------- lineinfile는 파일이 없을 경우 에러를 뱉으므로 copy로 수정
+#     # - name: Merge vhosts configuration
+#     #   lineinfile:
+#     #     path: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
+#     #     insertafter: EOF
+#     #     line: "{{ slurped_file.content | b64decode }}"
+#     #   when: tempfile_status.stat.exists
+#     # ---------- 기존 코드
+#     # - name: Merge vhosts configuration
+#     #   lineinfile:
+#     #     path: /etc/httpd/conf.d/vhosts.conf
+#     #     insertafter: EOF
+#     #     line: "{{ slurped_file.content | b64decode }}"
+#     #   when: tempfile_status.stat.exists
+
+#   rescue:
+#     # - name: Restore backup of vhosts.conf
+#     #   copy:
+#     #     src: /etc/httpd/conf.d/{{ user_id }}_vhosts.conf.old
+#     #     dest: /etc/httpd/conf.d/{{ user_id }}_vhosts.conf
+#     #     remote_src: yes
+#     - name: Restore backup of vhosts.conf
+#       copy:
+#         src: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf.old
+#         dest: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
+#         remote_src: yes
+#     # - name: Restore backup of vhosts.conf
+#     #   copy:
+#     #     src: /etc/httpd/conf.d/vhosts.conf.old
+#     #     dest: /etc/httpd/conf.d/vhosts.conf
+#     #     remote_src: yes
+
+#     - name: Rename vhosts temporary file to indicate failure
+#       command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
+
+# # conf.d/cband.conf
+# # TODO: cband 파일 정책에 따라 코드가 달라질 가능성이 존재
+# # TODO: cband_limit 변수의 할당 여부에 따라 예외처리
+# - name: Backup and configure cband.conf
+#   block:
+#     # - name: Backup cband.conf
+#     #   copy:
+#     #     src: /etc/httpd/conf.d/cband_{{ user_id }}.conf
+#     #     dest: /etc/httpd/conf.d/cband_{{ user_id }}.conf.old
+#     #     remote_src: yes
+
+#     - name: Configure cband.conf
+#       template:
+#         src: cband.j2
+#         dest: /tmp/cband.conf_tempfile
+
+#     - name: Debug cband.conf_tempfile existence
+#       stat:
+#         path: /tmp/cband.conf_tempfile
+#       register: tempfile_status
+
+#     - name: Ensure cband.conf_tempfile exists
+#       fail:
+#         msg: "Temporary file /tmp/cband.conf_tempfile was not created by template."
+#       when: not tempfile_status.stat.exists
+
+#     - name: Slurp cband.conf_tempfile content
+#       ansible.builtin.slurp:
+#         src: /tmp/cband.conf_tempfile
+#       register: slurped_file
+#       when: tempfile_status.stat.exists
+
+#     # 해당 코드의 변천사는 위 vhost와 동일
+#     # - name: Create and merge vhosts configuration
+#     #   copy:
+#     #     content: "{{ slurped_file.content | b64decode }}"
+#     #     dest: /etc/httpd/conf.d/{{ user_id }}_cband.conf
+#     #     owner: "{{ user_id }}"
+#     #     group: www
+#     #     mode: '0644'
+#     #   when: tempfile_status.stat.exists
+#     - name: Create and merge vhosts configuration
+#       copy:
+#         content: "{{ slurped_file.content | b64decode }}"
+#         dest: /etc/httpd/conf.d/{{ user_id }}/cband.conf
+#         owner: "{{ user_id }}"
+#         group: www
+#         mode: '0644'
+#       when: tempfile_status.stat.exists
+#     # - name: Merge cband configuration
+#     #   lineinfile:
+#     #     path: /etc/httpd/conf.d/cband.conf
+#     #     insertafter: EOF
+#     #     line: "{{ slurped_file.content | b64decode }}"
+#     #   when: tempfile_status.stat.exists
+#   when: cband_limit is defined and cband_limit != ""
+
+#   rescue:
+#     # - name: Restore backup of cband.conf
+#     #   copy:
+#     #     src: /etc/httpd/conf.d/{{ user_id }}_cband.conf.old
+#     #     dest: /etc/httpd/conf.d/{{ user_id }}_cband.conf
+#     #     remote_src: yes
+#     - name: Restore backup of cband.conf
+#       copy:
+#         src: /etc/httpd/conf.d/{{ user_id }}/cband.conf.old
+#         dest: /etc/httpd/conf.d/{{ user_id }}/cband.conf
+#         remote_src: yes
+#     # - name: Restore backup of cband.conf
+#     #   copy:
+#     #     src: /etc/httpd/conf.d/cband.conf.old
+#     #     dest: /etc/httpd/conf.d/cband.conf
+#     #     remote_src: yes
+
+#     - name: Rename cband temporary file to indicate failure
+#       command: mv /tmp/cband.conf_tempfile /tmp/cband.conf_tempfile_failed
+
+
+# - name: Test Apache configuration
+#   command: /usr/sbin/apachectl -t
+#   notify:
+#     - Restart Apache
+#   failed_when: false
+#   register: apache_test
+
+# - name: Check Apache configuration test result
+#   fail:
+#     msg: "Apache configuration test failed, changes have been rolled back."
+#   when: apache_test.rc != 0
+
+# # curl이 설치되었는지 확인하고, 설치되지 않았다면 설치합니다.
+# - name: Ensure curl is installed
+#   ansible.builtin.package:
+#     name: curl
+#     state: present
+
+# # 가상 호스트에 HTTP 요청을 보냅니다.
+# - name: Make a request to the configured virtual host
+#   shell: 'curl -s -H "Host {{ vhost_domain }}" localhost'
+#   register: curl_output
+#   changed_when: false
+
+# # 요청의 응답 내용이 예상한 내용과 일치하는지 검사합니다.
+# - name: Verify the content of index.html
+#   assert:
+#     that:
+#       - "'{{ expected_content }}' in curl_output.stdout"
+#     fail_msg: "Expected content not found in the response from the virtual host"
+#     success_msg: "Virtual host is serving the expected content"
+#   vars:
+#     expected_content: "{{ lookup('template', 'templates/index.html.j2') }}"
+
+
+
+
 # tasks file for iteasy.ansible.roles.webhost_manager
 - name: Check if IncludeOptional conf.d/*.conf exists in httpd.conf
   lineinfile:
@@ -29,13 +336,6 @@
     group: www
 
 # 쿼타 설정
-# TODO: 쿼타 설정을 현재 상황에 맞춰서 그냥 사용 할 것인가
-# TODO: 아니면 동적으로 변경하여 사용 할 수 있게 할 것인가
-# TODO: 일단 생략하기로 함
-# - name: Prepare disk quota command
-#   set_fact:
-#     quota_command: >
-#       edquota -p test7 -u {{ user_id }} 
 - name: Prepare disk quota command
   set_fact:
     quota_command: >
@@ -64,8 +364,7 @@
     - { path: "/home/{{ user_id }}", mode: "0701" }
     - { path: "/home/{{ user_id }}/www", mode: "0755" }
     - { path: "/etc/httpd/logs/vhosts/{{ user_id }}", mode: "0701" }
-    # 논의 후 방향에 따라 달라질 것
-    - { path: "/etc/httpd/conf.d/{{ user_id }}", mode: "0701" } # 유저별 conf 폴더 추가
+    - { path: "/etc/httpd/conf.d/{{ user_id }}", mode: "0701" }
 
 - name: Create index.html from template
   template:
@@ -73,7 +372,6 @@
     dest: /home/{{ user_id }}/www/index.html
 
 # 데이터베이스
-# 2024/07/23 원격노드에 파이썬 모듈을 설치해야하는 이슈로 인해 쉘로 전환
 - name: Create SQL file
   template:
     src: templates/createDB.j2
@@ -103,15 +401,8 @@
   when: not nobots_conf.stat.exists
 
 # conf.d/vhosts.conf
-# TODO: vhosts 파일 정책에 따라 코드가 달라질 가능성이 존재
 - name: Backup and configure vhosts.conf
   block:
-    # - name: Backup vhosts.conf
-    #   copy:
-    #     src: /etc/httpd/conf.d/vhosts_{{ user_id }}.conf
-    #     dest: /etc/httpd/conf.d/vhosts_{{ user_id }}.conf.old
-    #     remote_src: yes
-
     - name: Configure vhosts.conf
       template:
         src: vhost.j2
@@ -133,20 +424,6 @@
       register: slurped_file
       when: tempfile_status.stat.exists
 
-    # 설정파일 뒤에 user 붙이는 것 테스트
-    # 소유권을 어떻게 할 것인가
-    # - name: Create and merge vhosts configuration
-    #   copy:
-    #     content: "{{ slurped_file.content | b64decode }}"
-    #     dest: /etc/httpd/conf.d/{{ user_id }}_vhosts.conf
-    #     owner: "{{ user_id }}"
-    #     group: www
-    #     mode: '0644'
-    #   when: tempfile_status.stat.exists
-    # 계정명으로 된 폴더에 하위에 위치하는 것 테스트
-    # 폴더를 재귀적으로는 참조하지 않으므로 안됨
-    # 하지만 conf/httpd.conf에서 설정한다면 될지도?
-    # 그렇게 하기에는 수정사항이 너무 많아지므로 보류
     - name: Create and merge vhosts configuration
       copy:
         content: "{{ slurped_file.content | b64decode }}"
@@ -155,52 +432,20 @@
         group: www
         mode: '0644'
       when: tempfile_status.stat.exists
-    # ---------- lineinfile는 파일이 없을 경우 에러를 뱉으므로 copy로 수정
-    # - name: Merge vhosts configuration
-    #   lineinfile:
-    #     path: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
-    #     insertafter: EOF
-    #     line: "{{ slurped_file.content | b64decode }}"
-    #   when: tempfile_status.stat.exists
-    # ---------- 기존 코드
-    # - name: Merge vhosts configuration
-    #   lineinfile:
-    #     path: /etc/httpd/conf.d/vhosts.conf
-    #     insertafter: EOF
-    #     line: "{{ slurped_file.content | b64decode }}"
-    #   when: tempfile_status.stat.exists
 
   rescue:
-    # - name: Restore backup of vhosts.conf
-    #   copy:
-    #     src: /etc/httpd/conf.d/{{ user_id }}_vhosts.conf.old
-    #     dest: /etc/httpd/conf.d/{{ user_id }}_vhosts.conf
-    #     remote_src: yes
     - name: Restore backup of vhosts.conf
       copy:
         src: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf.old
         dest: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
         remote_src: yes
-    # - name: Restore backup of vhosts.conf
-    #   copy:
-    #     src: /etc/httpd/conf.d/vhosts.conf.old
-    #     dest: /etc/httpd/conf.d/vhosts.conf
-    #     remote_src: yes
 
     - name: Rename vhosts temporary file to indicate failure
       command: mv /tmp/vhosts.conf_tempfile /tmp/vhosts.conf_tempfile_failed
 
 # conf.d/cband.conf
-# TODO: cband 파일 정책에 따라 코드가 달라질 가능성이 존재
-# TODO: cband_limit 변수의 할당 여부에 따라 예외처리
 - name: Backup and configure cband.conf
   block:
-    # - name: Backup cband.conf
-    #   copy:
-    #     src: /etc/httpd/conf.d/cband_{{ user_id }}.conf
-    #     dest: /etc/httpd/conf.d/cband_{{ user_id }}.conf.old
-    #     remote_src: yes
-
     - name: Configure cband.conf
       template:
         src: cband.j2
@@ -222,16 +467,7 @@
       register: slurped_file
       when: tempfile_status.stat.exists
 
-    # 해당 코드의 변천사는 위 vhost와 동일
-    # - name: Create and merge vhosts configuration
-    #   copy:
-    #     content: "{{ slurped_file.content | b64decode }}"
-    #     dest: /etc/httpd/conf.d/{{ user_id }}_cband.conf
-    #     owner: "{{ user_id }}"
-    #     group: www
-    #     mode: '0644'
-    #   when: tempfile_status.stat.exists
-    - name: Create and merge vhosts configuration
+    - name: Create and merge cband configuration
       copy:
         content: "{{ slurped_file.content | b64decode }}"
         dest: /etc/httpd/conf.d/{{ user_id }}/cband.conf
@@ -239,46 +475,35 @@
         group: www
         mode: '0644'
       when: tempfile_status.stat.exists
-    # - name: Merge cband configuration
-    #   lineinfile:
-    #     path: /etc/httpd/conf.d/cband.conf
-    #     insertafter: EOF
-    #     line: "{{ slurped_file.content | b64decode }}"
-    #   when: tempfile_status.stat.exists
+
   when: cband_limit is defined and cband_limit != ""
 
   rescue:
-    # - name: Restore backup of cband.conf
-    #   copy:
-    #     src: /etc/httpd/conf.d/{{ user_id }}_cband.conf.old
-    #     dest: /etc/httpd/conf.d/{{ user_id }}_cband.conf
-    #     remote_src: yes
     - name: Restore backup of cband.conf
       copy:
         src: /etc/httpd/conf.d/{{ user_id }}/cband.conf.old
         dest: /etc/httpd/conf.d/{{ user_id }}/cband.conf
         remote_src: yes
-    # - name: Restore backup of cband.conf
-    #   copy:
-    #     src: /etc/httpd/conf.d/cband.conf.old
-    #     dest: /etc/httpd/conf.d/cband.conf
-    #     remote_src: yes
 
     - name: Rename cband temporary file to indicate failure
       command: mv /tmp/cband.conf_tempfile /tmp/cband.conf_tempfile_failed
 
 
+# Apache 설정 테스트 및 서비스 재시작
 - name: Test Apache configuration
   command: /usr/sbin/apachectl -t
-  notify:
-    - Restart Apache
-  failed_when: false
   register: apache_test
 
 - name: Check Apache configuration test result
   fail:
     msg: "Apache configuration test failed, changes have been rolled back."
   when: apache_test.rc != 0
+
+- name: Restart Apache
+  service:
+    name: httpd
+    state: restarted
+  when: apache_test.rc == 0
 
 # curl이 설치되었는지 확인하고, 설치되지 않았다면 설치합니다.
 - name: Ensure curl is installed
@@ -301,3 +526,4 @@
     success_msg: "Virtual host is serving the expected content"
   vars:
     expected_content: "{{ lookup('template', 'templates/index.html.j2') }}"
+

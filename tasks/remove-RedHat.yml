@@ -80,29 +80,6 @@
     state: absent
   when: conf_dir.stat.isdir and conf_dir.stat.exists
 
-# 파일 삭제 용
-# - name: Check if vhost file exists
-#   stat:
-#     path: "/etc/httpd/conf.d/{{ user_id }}_vhosts.conf"
-#   register: vhost_file
-
-# - name: Remove vhost file if it exists
-#   file:
-#     path: "/etc/httpd/conf.d/{{ user_id }}_vhosts.conf"
-#     state: absent
-#   when: vhost_file.stat.exists
-
-# - name: Check if cband file exists
-#   stat:
-#     path: "/etc/httpd/conf.d/{{ user_id }}_cband.conf"
-#   register: cband_file
-
-# - name: Remove cband file if it exists
-#   file:
-#     path: "/etc/httpd/conf.d/{{ user_id }}_cband.conf"
-#     state: absent
-#   when: cband_file.stat.exists
-
 # 폴더 삭제 용
 - name: Check if log directory exists
   stat:
