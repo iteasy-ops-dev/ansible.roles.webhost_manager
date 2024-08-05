@@ -3,6 +3,8 @@ Ansible Role: Manage Webhost on Linux
 
 - webhost를 관리합니다.
 - 템플릿을 통한 일반화를 위한 작업을 수행합니다.
+- conf.d/**./*.conf 를 import 합니다
+- 계정명을 폴더 명으로 설정하여 개별 관리합니다.
 
 생성
 ---
@@ -16,7 +18,8 @@ Ansible Role: Manage Webhost on Linux
 ---
 1. [x] 계정 삭제
 2. [x] DB 계정 삭제
-3. [ ] vhost 삭제
+3. [x] vhost 삭제
+4. [x] cband 삭제
 
 Requirements
 ------------

@@ -279,3 +279,25 @@
   fail:
     msg: "Apache configuration test failed, changes have been rolled back."
   when: apache_test.rc != 0
+
+# curl이 설치되었는지 확인하고, 설치되지 않았다면 설치합니다.
+- name: Ensure curl is installed
+  ansible.builtin.package:
+    name: curl
+    state: present
+
+# 가상 호스트에 HTTP 요청을 보냅니다.
+- name: Make a request to the configured virtual host
+  shell: "curl -s http://{{ vhost_domain }}"
+  register: curl_output
+  changed_when: false
+
+# 요청의 응답 내용이 예상한 내용과 일치하는지 검사합니다.
+- name: Verify the content of index.html
+  assert:
+    that:
+      - "'{{ expected_content }}' in curl_output.stdout"
+    fail_msg: "Expected content not found in the response from the virtual host"
+    success_msg: "Virtual host is serving the expected content"
+  vars:
+    expected_content: "{{ lookup('template', 'templates/index.html.j2') }}"
