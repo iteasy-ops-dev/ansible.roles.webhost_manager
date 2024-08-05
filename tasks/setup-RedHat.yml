@@ -513,7 +513,7 @@
 
 # 가상 호스트에 HTTP 요청을 보냅니다.
 - name: Make a request to the configured virtual host
-  shell: 'curl -s -H "Host {{ vhost_domain }}" localhost'
+  shell: 'curl -s -H "Host: {{ vhost_domain }}" localhost'
   register: curl_output
   changed_when: false
 
