@@ -102,3 +102,15 @@
 #     path: "/etc/httpd/conf.d/{{ user_id }}_cband.conf"
 #     state: absent
 #   when: cband_file.stat.exists
+
+# 폴더 삭제 용
+- name: Check if log directory exists
+  stat:
+    path: "/etc/httpd/logs/vhosts/{{ user_id }}"
+  register: log_dir
+
+- name: Remove log directory if it exists and is empty
+  file:
+    path: "/etc/httpd/logs/vhosts/{{ user_id }}"
+    state: absent
+  when: log_dir.stat.isdir and log_dir.stat.exists
