@@ -10,15 +10,15 @@
         Order Deny,Allow
         Allow from all
         Require all granted
-        # RMode config
-        # RUidGid {{ user_id }} www
+        RMode config
+        RUidGid {{ user_id }} www
     </Directory>
     ErrorLog logs/vhosts/{{ user_id }}/{{ user_id }}-error_log
     CustomLog logs/vhosts/{{ user_id }}/{{ user_id }}-access_log combined
-    # php_admin_flag display_errors Off
-    # php_admin_flag allow_url_fopen Off
-    # php_admin_flag register_globals Off
-    # php_admin_flag magic_quotes_gpc Off
+    php_admin_flag display_errors Off
+    php_admin_flag allow_url_fopen Off
+    php_admin_flag register_globals Off
+    php_admin_flag magic_quotes_gpc Off
     RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK)
     RewriteRule .* - [F]
     RewriteCond %{REQUEST_URI} ^/error/509.html$
