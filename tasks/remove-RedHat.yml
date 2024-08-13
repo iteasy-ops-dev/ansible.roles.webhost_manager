@@ -1,4 +1,12 @@
 # tasks file for iteasy.ansible.roles.webhost_manager
+# 데이터베이스 접속 계정과 비밀번호 유효성 검사
+- name: Check if MySQL root credentials are valid
+  shell: "mysql -u {{ mysql_root_user }} -p'{{ mysql_root_password }}' -e 'SHOW DATABASES;'"
+  register: mysql_credential_check
+  failed_when: "'Access denied' in mysql_credential_check.stderr"
+  changed_when: false
+  when: db_name is defined and db_name != "" and db_user is defined and db_user != ""
+  
 - name: Check if the user exists
   ansible.builtin.getent:
     database: passwd
