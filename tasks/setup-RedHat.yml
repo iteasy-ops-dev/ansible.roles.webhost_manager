@@ -17,7 +17,7 @@
 - name: Check if IncludeOptional conf.d/**/*.conf exists in httpd.conf
   lineinfile:
     path: /etc/httpd/conf/httpd.conf
-    line: IncludeOptional conf.d/**/*.conf
+    line: IncludeOptional conf.d/vhosts/**/*.conf
     state: present
     insertafter: EOF
 
@@ -58,14 +58,14 @@
   file:
     path: "{{ item.path }}"
     state: directory
-    owner: "{{ user_id }}"
-    group: www
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
     mode: "{{ item.mode }}"
   with_items:
-    - { path: "/home/{{ user_id }}", mode: "0701" }
-    - { path: "/home/{{ user_id }}/www", mode: "0755" }
-    - { path: "/etc/httpd/logs/vhosts/{{ user_id }}", mode: "0701" }
-    - { path: "/etc/httpd/conf.d/{{ user_id }}", mode: "0701" }
+    - { path: "/home/{{ user_id }}", owner: "{{ user_id }}", group: "www", mode: "0701" }
+    - { path: "/home/{{ user_id }}/www", owner: "{{ user_id }}", group: "www",mode: "0755" }
+    - { path: "/etc/httpd/logs/vhosts/{{ user_id }}", owner: "root", group: "root",mode: "0701" }
+    - { path: "/etc/httpd/conf.d/vhosts/{{ user_id }}", owner: "root", group: "root",mode: "0701" }
 
 - name: Create index.html from template
   template:
@@ -128,7 +128,7 @@
     - name: Create and merge vhosts configuration
       copy:
         content: "{{ slurped_file.content | b64decode }}"
-        dest: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
+        dest: /etc/httpd/conf.d/vhosts/{{ user_id }}/vhosts.conf
         owner: "{{ user_id }}"
         group: www
         mode: '0644'
@@ -137,8 +137,8 @@
   rescue:
     - name: Restore backup of vhosts.conf
       copy:
-        src: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf.old
-        dest: /etc/httpd/conf.d/{{ user_id }}/vhosts.conf
+        src: /etc/httpd/conf.d/vhosts/{{ user_id }}/vhosts.conf.old
+        dest: /etc/httpd/conf.d/vhosts/{{ user_id }}/vhosts.conf
         remote_src: yes
 
     - name: Rename vhosts temporary file to indicate failure
@@ -171,7 +171,7 @@
     - name: Create and merge cband configuration
       copy:
         content: "{{ slurped_file.content | b64decode }}"
-        dest: /etc/httpd/conf.d/{{ user_id }}/cband.conf
+        dest: /etc/httpd/conf.d/vhosts/{{ user_id }}/cband.conf
         owner: "{{ user_id }}"
         group: www
         mode: '0644'
@@ -182,8 +182,8 @@
   rescue:
     - name: Restore backup of cband.conf
       copy:
-        src: /etc/httpd/conf.d/{{ user_id }}/cband.conf.old
-        dest: /etc/httpd/conf.d/{{ user_id }}/cband.conf
+        src: /etc/httpd/conf.d/vhosts/{{ user_id }}/cband.conf.old
+        dest: /etc/httpd/conf.d/vhosts/{{ user_id }}/cband.conf
         remote_src: yes
 
     - name: Rename cband temporary file to indicate failure
