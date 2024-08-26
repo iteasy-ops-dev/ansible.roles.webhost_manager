@@ -79,12 +79,12 @@
 # 폴더 삭제 용
 - name: Check if vhost directory exists
   stat:
-    path: "/etc/httpd/conf.d/{{ user_id }}"
+    path: "/etc/httpd/conf.d/vhosts/{{ user_id }}"
   register: conf_dir
 
 - name: Remove vhost directory if it exists and is empty
   file:
-    path: "/etc/httpd/conf.d/{{ user_id }}"
+    path: "/etc/httpd/conf.d/vhosts/{{ user_id }}"
     state: absent
   when: conf_dir.stat.isdir and conf_dir.stat.exists
 
