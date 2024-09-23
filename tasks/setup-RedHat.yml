@@ -40,9 +40,14 @@
 - name: Prepare disk quota command
   set_fact:
     quota_command: >
-      edquota -u {{ user_id }} 
-      {{ (disk_quota == 'unlimited') | ternary('0 0 0 0', ((disk_quota | int * 1024 * 1000)) ~ ' ' ~ ((disk_quota | int * 1024 * 1000)) ~ ' 0 0') }}
+      edquota -p test7 -u "{{ user_id }}"
   when: disk_quota is defined and disk_quota != ""
+# - name: Prepare disk quota command
+#   set_fact:
+#     quota_command: >
+#       edquota -u {{ user_id }} 
+#       {{ (disk_quota == 'unlimited') | ternary('0 0 0 0', ((disk_quota | int * 1024 * 1000)) ~ ' ' ~ ((disk_quota | int * 1024 * 1000)) ~ ' 0 0') }}
+#   when: disk_quota is defined and disk_quota != ""
 
 - name: Debug disk quota command
   debug:
