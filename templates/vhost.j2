@@ -13,6 +13,7 @@
         RMode config
         RUidGid {{ user_id }} www
     </Directory>
+    RewriteEngine On
     ErrorLog logs/vhosts/{{ user_id }}/{{ user_id }}-error_log
     CustomLog logs/vhosts/{{ user_id }}/{{ user_id }}-access_log combined
     php_admin_flag display_errors Off
